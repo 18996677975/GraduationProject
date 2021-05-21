@@ -1,0 +1,1895 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>深圳地铁情况</title>
+    <style type="text/css">
+
+        html, body {
+            height: 100%;
+            width: 100%;
+            overflow: auto
+        }
+
+        .lvmamp-subway-api path {
+            fill: none;
+            stroke-width: 8
+        }
+
+        .lvmamp-subway-api circle {
+            fill: #fff;
+            stroke-width: 2;
+            cursor: pointer;
+        }
+
+        .lvmamp-subway-api circle.subway-station-outside {
+            fill: transparent;
+            stroke: transparent;
+            stroke-width: 0
+        }
+
+        .lvmamp-subway-api .line_name_txt {
+            font-size: 24px !important;
+        }
+
+        .line_name_bg {
+            font-size: 14px !important;
+        }
+
+        .line_name_bg2 {
+            font-size: 8px !important;
+        }
+
+        .lvmamp-subway-api #subway-svg {
+            position: absolute;
+
+
+        }
+
+        .lvmamp-subway-api .line_name {
+            display: block;
+            float: left
+        }
+
+
+        .lvmamp-subway-api #g-station-name-normal {
+            width: 2000px;
+            height: 2000px;
+            position: absolute;
+            background-color: transparent;
+            -webkit-transform-origin: 0 0;
+            transform-origin: 0 0
+        }
+
+        .lvmamp-subway-api #subway-svg text {
+            font-size: 16px
+        }
+
+    </style>
+
+    <style type="text/css">
+        #top {
+            display: block;
+            width: 2500px;
+            height: 100px;
+            margin-left: 300px;
+        }
+
+        #top input {
+            border: solid blue;
+            background: none;
+            color: black;
+            font-size: 50px;
+            width: 1200px;
+            height: 100px;
+            padding: 0px 20px 0px 20px;
+        }
+
+        #totalBackground {
+            width: 3000px;
+            height: 1800px;
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            background-color: #c4c2c1;
+            z-index: 1;
+            opacity: .6;
+        }
+
+
+    </style>
+</head>
+<body>
+<div id="top">
+    <input type="button" id="inp1" value="首页" name="首页"/>
+    <input type="button" id="inp2" value="数据平台" name="数据平台"/>
+</div>
+
+<div id="mybox" class="lvmamp-subway-api">
+    <svg class="subway-content" id="subway-svg" lvszcmc="1" width="2000px" height="2000px"
+         style="width: 2800px; height: 2000px; left: 300px; top: -300px;">
+        <defs>
+            <image id="normalStation" width="28" height="18"
+                   xlink:href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAHgAAAB4CAYAAAA5ZDbSAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAA3hpVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADw/eHBhY2tldCBiZWdpbj0i77u/IiBpZD0iVzVNME1wQ2VoaUh6cmVTek5UY3prYzlkIj8+IDx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IkFkb2JlIFhNUCBDb3JlIDUuNi1jMDY3IDc5LjE1Nzc0NywgMjAxNS8wMy8zMC0yMzo0MDo0MiAgICAgICAgIj4gPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4gPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIgeG1sbnM6eG1wTU09Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9tbS8iIHhtbG5zOnN0UmVmPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvc1R5cGUvUmVzb3VyY2VSZWYjIiB4bWxuczp4bXA9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC8iIHhtcE1NOk9yaWdpbmFsRG9jdW1lbnRJRD0ieG1wLmRpZDo1YWNmNjhmZS1jNzM1LTRjNjktODM4Yi1jMWQ1OTYzNDA4NDciIHhtcE1NOkRvY3VtZW50SUQ9InhtcC5kaWQ6ODJDNjA0N0U0NEJBMTFFNkE1OTlDNTg1NDM3OThCNkMiIHhtcE1NOkluc3RhbmNlSUQ9InhtcC5paWQ6ODJDNjA0N0Q0NEJBMTFFNkE1OTlDNTg1NDM3OThCNkMiIHhtcDpDcmVhdG9yVG9vbD0iQWRvYmUgUGhvdG9zaG9wIENDIDIwMTUgKE1hY2ludG9zaCkiPiA8eG1wTU06RGVyaXZlZEZyb20gc3RSZWY6aW5zdGFuY2VJRD0ieG1wLmlpZDo1YWNmNjhmZS1jNzM1LTRjNjktODM4Yi1jMWQ1OTYzNDA4NDciIHN0UmVmOmRvY3VtZW50SUQ9InhtcC5kaWQ6NWFjZjY4ZmUtYzczNS00YzY5LTgzOGItYzFkNTk2MzQwODQ3Ii8+IDwvcmRmOkRlc2NyaXB0aW9uPiA8L3JkZjpSREY+IDwveDp4bXBtZXRhPiA8P3hwYWNrZXQgZW5kPSJyIj8+vlNcgAAABLhJREFUeNrsnT9oW0ccx09tbC8eGrRpMDIBD9ZQLekgTCCjMaElS6KtdGu8tBhC8NChUweDPSUeQsggQ7PFtJ4DwWhIBrdQezAURAZtwgZriZ3w8vuh5+IS+3RPetL7c58PfKcn6/3uPrzT0+nduRAEgYH88gVdgGBAMCAYEAwIBgQDghEMCAYEA4IBwYBgQDCCAcGAYEAwIBgQDAgGBCMYEAwIBgQDgmEAriVdQKFQiPstb0i+lsxL5iRlSUlSlEyHr+lKOpK2pCU5lBxI/pb8G+VkaV+8V0i6wJgE35TcltyS1CTXB3yfI0lT8lrySvIWwckJnpJ8J7kjWZJ8FXNpx5IdyR+Sl5L3CB6f4Pthvh1TmduS38MgeISCdfj9QfK95Msxl/pR8lzyLBzGERyjYH3RA8mPkkrCfbYveSJ53POL4GEFz0h+lvyUsr7bkKxL/71D8OCCq5JHknsp7b8Xkt+kD/9CcHTB30h+Ce+QI1GpVMzCwoKp1WqmXC6bUqlkisWimZ7ufQ3udrum0+mYdrttWq2WaTabZnd31+zv7w/SBL3T/lX68U0qDavgJGO5cv/U8qKkXq8HjUYjGBT9W32PqOcNa60m3ZeX9m8KBc+EX0ecO3hxcTHY29sL4kLfS98zomSteQbBdsE6Xq+7durs7Gywvb0djAp9bz1HBMnr5x97CL5c8LJrZ66srAQnJyfBqNFz6LkiSF5G8OWCdRLjH5dOXFtbC8aNntNRsLahhuDPBT916cDNzc0gKfTcjpKfIvj/gnVe+UMar9wBr2Rty30E9wRPhb/W9P3MTQuOn8napikE92ap+t4tj+OGKsqNl+Pd9b2k+zcNj+zc6Tvpu7Hx3yxUGtBatKY42pbrmazwSYyjfpMYacVhMkTbdtPbIVp42G+Yi3OGKm60Nodh+qHPQ/Qt28F6vW6q1Wpqf4rT2rTGYdo4ahITXCgUboSTG1eytLRk0o5DjbWwrX59Bgt3bUNbpVIJsoLW2meYvuvjED1vO6i/52YFh1rnvRuiTe+h9KvHtVotM4Idap3zUXDZerBczoxgh1rLPgouWQ+WSpkR7FBryUfBRevBYjEzgh1qTawxiT10J18dzoxl8dvp6amZmJjIhOCzszMzOTlpe8kH6ecJ365gyLngrvVgt5uZTnSoteuj4I71YKeTGcEOtXZ8FNy2Hmy3MyPYoda2j4Jb1oOtVmYEO9Ta8lHwoe2gLifJCg61Hvoo+MB2UNcKZQWHWg98FKwbnhxddVAXgm1tbaVertbYZ9HaUdhWvwTLF3/dzcY6tu3s7KResEONzbCtiXU0j+zwyM7I0K2Kjm0vWF1dTe3V61DbcdhG4+UVHF7FjX5XwShXEA6z8tDh6m3w4DsPvrN0xbB0hcVnLD5j+SjLR1kAzgJwtnBgCwc2YUEw2yh5LVhhI7SYwlaGOd/KkM1Ih4PNSIcUfP6ZzHbCORZ8fnfNhuA5FnxxMoQt/XMs+OLcNf+UI8eCz3+F4t/q5FjwRfjHWDkXfBH+tV2aBMNoYfkoggHBgGBAMCAYEAwIRjAgGBAMCAYEA4IBwQgGBAOCAcGAYEAwIBgQjGBAMCAYEAwIBgQDgn3jkwADAMI8mSZEAjHSAAAAAElFTkSuQmCC"></image>
+            <image id="transferStation" width="28" height="18" xlink:href="Data/change.png"></image>
+        </defs>
+        <g id="svg-g" class="svg-g" transform="translate(-26,235) scale(1)">
+            <g id="g-line-normal">
+                <path id="line-440300024063" name="440300024063" stroke="#00a946"
+                      d="M411,872L411 872L411 1163L411 1158L411 1267L413 1272L415 1274L437 1299L1328 1299L1446 1298L1501 1299L1539 1299L1548 1295L1553 1289L1606 1207L1638 1145L1646 1138L1671 1129L1671 1419"></path>
+                <path id="line-440300024076" name="440300024076" stroke="#b75020"
+                      d="M308,1668L308 1668L626 1668L634 1666L639 1662L644 1655L646 1648L646 1610L646 1375L649 1365L653 1360L659 1357L667 1356L687 1356L747 1355L790 1355L795 1354L800 1351L804 1347L807 1343L809 1339L810 1335L810 1299L809 1253L809 1223L811 1217L815 1212L820 1208L826 1206L856 1206L993 1206L1021 1207L2053 1207"></path>
+                <path id="line-440300024060" name="440300024060" stroke="#00a4e0"
+                      d="M1149,1568L1149 1568L1149 1371L1153 1363L1184 1334L1189 1324L1189 1296L1190 1207L1189 1167L1190 1162L1193 1158L1229 1129L1671 1129L1671 1080L1671 669L1672 664L1673 661L1706 630L1764 572L1796 544L1828 514L1857 486L2146 486"></path>
+                <path id="line-440300024074" name="440300024074" stroke="#d3101a"
+                      d="M1593,355L1593 355L1493 355L1477 356L1472 357L1464 361L1438 380L1401 414L1253 550L1235 571L1231 578L1229 585L1229 1491"></path>
+                <path id="line-440300024058" name="440300024058" stroke="#914696"
+                      d="M308,1668L308 1668L308 1426L355 1370L425 1299L346 1217L344 1204L344 1197L346 1188L349 1178L354 1172L358 1167L364 1162L368 1160L376 1158L411 1158L501 1158L511 1156L523 1150L532 1141L580 1080L644 996L705 909L743 858L750 851L759 844L770 838L784 833L797 830L815 829L1173 829L1229 830L1671 830L1759 831L1766 832L1773 835L1779 839L1784 843L1788 848L1792 855L1794 862L1795 870L1795 1207"></path>
+                <path id="line-440300024046" name="440300024046" stroke="#1ab5ad"
+                      d="M403,495L403 495L478 496L530 496L849 496L869 497L877 498L884 501L890 504L921 523L955 544L991 567L1030 591L1068 613L1107 637L1145 660L1188 687L1245 719L1249 722L1251 724L1252 728L1252 732L1253 739L1252 763L1252 767L1250 772L1246 775L1241 778L1229 785L1214 798L1210 805L1209 809L1209 938L1211 942L1215 944L1322 945L1397 945L1477 946L1488 946L1496 949L1501 954L1502 962L1501 978L1501 1069L1501 1299"></path>
+                <path id="line-440300024050" name="440300024050" stroke="#003a91"
+                      d="M1002,747L1002 747L943 794L940 799L938 809L938 829L938 1253L939 1257L941 1259L945 1262L948 1263L1006 1263L1040 1263L1047 1266L1050 1273L1050 1299L1060 1299L1050 1299L1050 1388L1053 1395L1060 1398L1105 1398L1387 1398L1395 1395L1401 1391L1404 1387L1407 1378L1407 1365L1407 1207L1405 1129L1405 1110L1406 1105L1410 1095L1415 1088L1420 1082L1450 1040L1491 984L1496 980L1498 979L1501 978L1506 977L1512 977L1695 977L1703 978L1707 980L1709 982L1758 1081L1763 1088L1769 1090L1795 1090"></path>
+                <path id="line-440300024086" name="440300024086" stroke="#b75020"
+                      d="M2053,1207L2053 1207L2443 1207"></path>
+                <path id="line-440300024054" name="440300024054" stroke="#83656b"
+                      d="M308,1426L308 1426L489 1426L510 1415L563 1371L607 1335L615 1328L619 1325L623 1323L628 1322L634 1321L664 1321L698 1322L704 1324L708 1328L715 1341L748 1433L852 1433L978 1433L1040 1432L1048 1430L1055 1424L1058 1420L1060 1412L1060 1248L1061 1207L1061 1085L1062 1026L1064 1019L1067 1016L1071 1013L1075 1012L1080 1011L1113 1011L1330 1011L1331 1010L1397 946L1441 895L1448 890L1454 887L1460 886L1465 885L1571 885L1574 886L1577 888L1579 890L1581 894L1582 898L1583 977L1583 1052L1582 1129L1582 1300L1582 1359L1583 1363L1586 1367L1588 1368L1592 1370L1597 1371L1817 1371"></path>
+                <path id="line-900000055265" name="900000055265" stroke="#eb6b91"
+                      d="M1578,467L1578 467L1578 545L1579 584L1579 618L1578 638L1578 647L1575 649L1571 652L1566 653L1498 653L1445 652L1357 652L1349 655L1338 663L1330 674L1328 682L1328 697L1328 1299L1326 1330L1324 1336L1321 1340L1318 1344L1313 1347L1256 1361L1248 1365L1244 1370L1243 1375L1243 1491"></path>
+                <path id="line-440300024056" name="440300024056" stroke="#741D51"
+                      d="M403,451L403 451L403 736L401 747L398 753L393 759L389 763L353 788L313 823L307 830L303 837L300 845L299 852L299 886L299 1176L300 1182L302 1187L305 1193L309 1198L411 1299L467 1351L578 1430L590 1433L646 1433L748 1433L738 1433L750 1464L753 1466L1050 1466L1058 1464L1065 1458L1068 1454L1070 1446L1070 1299L1060 1299L1070 1299L1070 1273L1073 1266L1080 1263L1170 1263L1177 1260L1180 1253L1180 1207L1190 1207"></path>
+            </g>
+            <g id="g-station-normal">
+                <circle cx="1671" cy="1419" r="6" stroke="#00a946"></circle>
+                <circle id="440300024063031" class="station_obj subway-entity subway-station-outside" cx="1671"
+                        cy="1419" line_id="440300024063" station_id="440300024063031" r="14"></circle>
+                <circle cx="1671" cy="1299" r="6" stroke="#00a946"></circle>
+                <circle id="440300024063030" class="station_obj subway-entity subway-station-outside" cx="1671"
+                        cy="1299" line_id="440300024063" station_id="440300024063030" r="14"></circle>
+                <use x="1657" y="1120" xlink:href="#transferStation"></use>
+                <circle id="440300024060022" class="station_obj subway-entity subway-station-outside" cx="1671"
+                        cy="1129" line_id="440300024063" station_id="440300024060022" r="14"></circle>
+                <use x="1592" y="1198" xlink:href="#transferStation"></use>
+                <circle id="440300024063028" class="station_obj subway-entity subway-station-outside" cx="1606"
+                        cy="1207" line_id="440300024063" station_id="440300024063028" r="14"></circle>
+                <use x="1487" y="1290" xlink:href="#transferStation"></use>
+                <circle id="440300024046036" class="station_obj subway-entity subway-station-outside" cx="1501"
+                        cy="1299" line_id="440300024063" station_id="440300024046036" r="14"></circle>
+                <circle cx="1446" cy="1298" r="6" stroke="#00a946"></circle>
+                <circle id="440300024063026" class="station_obj subway-entity subway-station-outside" cx="1446"
+                        cy="1298" line_id="440300024063" station_id="440300024063026" r="14"></circle>
+                <use x="1314" y="1290" xlink:href="#transferStation"></use>
+                <circle id="440300024063025" class="station_obj subway-entity subway-station-outside" cx="1328"
+                        cy="1299" line_id="440300024063" station_id="440300024063025" r="14"></circle>
+                <use x="1215" y="1290" xlink:href="#transferStation"></use>
+                <circle id="440300024063024" class="station_obj subway-entity subway-station-outside" cx="1229"
+                        cy="1299" line_id="440300024063" station_id="440300024063024" r="14"></circle>
+                <use x="1175" y="1290" xlink:href="#transferStation"></use>
+                <circle id="440300024060029" class="station_obj subway-entity subway-station-outside" cx="1189"
+                        cy="1299" line_id="440300024063" station_id="440300024060029" r="14"></circle>
+                <circle cx="1112" cy="1299" r="6" stroke="#00a946"></circle>
+                <circle id="440300024063022" class="station_obj subway-entity subway-station-outside" cx="1112"
+                        cy="1299" line_id="440300024063" station_id="440300024063022" r="14"></circle>
+                <use x="1046" y="1290" xlink:href="#transferStation"></use>
+                <circle id="440300024050011" class="station_obj subway-entity subway-station-outside" cx="1060"
+                        cy="1299" line_id="440300024063" station_id="440300024050011" r="14"></circle>
+                <circle cx="996" cy="1299" r="6" stroke="#00a946"></circle>
+                <circle id="440300024063020" class="station_obj subway-entity subway-station-outside" cx="996"
+                        cy="1299" line_id="440300024063" station_id="440300024063020" r="14"></circle>
+                <circle cx="943" cy="1299" r="6" stroke="#00a946"></circle>
+                <circle id="440300024063019" class="station_obj subway-entity subway-station-outside" cx="943"
+                        cy="1299" line_id="440300024063" station_id="440300024063019" r="14"></circle>
+                <circle cx="883" cy="1299" r="6" stroke="#00a946"></circle>
+                <circle id="440300024063018" class="station_obj subway-entity subway-station-outside" cx="883"
+                        cy="1299" line_id="440300024063" station_id="440300024063018" r="14"></circle>
+                <use x="796" y="1290" xlink:href="#transferStation"></use>
+                <circle id="440300024063017" class="station_obj subway-entity subway-station-outside" cx="810"
+                        cy="1299" line_id="440300024063" station_id="440300024063017" r="14"></circle>
+                <circle cx="747" cy="1299" r="6" stroke="#00a946"></circle>
+                <circle id="440300024063016" class="station_obj subway-entity subway-station-outside" cx="747"
+                        cy="1299" line_id="440300024063" station_id="440300024063016" r="14"></circle>
+                <circle cx="688" cy="1299" r="6" stroke="#00a946"></circle>
+                <circle id="440300024063015" class="station_obj subway-entity subway-station-outside" cx="688"
+                        cy="1299" line_id="440300024063" station_id="440300024063015" r="14"></circle>
+                <circle cx="632" cy="1299" r="6" stroke="#00a946"></circle>
+                <circle id="440300024063014" class="station_obj subway-entity subway-station-outside" cx="632"
+                        cy="1299" line_id="440300024063" station_id="440300024063014" r="14"></circle>
+                <circle cx="579" cy="1299" r="6" stroke="#00a946"></circle>
+                <circle id="440300024063013" class="station_obj subway-entity subway-station-outside" cx="579"
+                        cy="1299" line_id="440300024063" station_id="440300024063013" r="14"></circle>
+                <circle cx="524" cy="1299" r="6" stroke="#00a946"></circle>
+                <circle id="440300024063012" class="station_obj subway-entity subway-station-outside" cx="524"
+                        cy="1299" line_id="440300024063" station_id="440300024063012" r="14"></circle>
+                <circle cx="467" cy="1299" r="6" stroke="#00a946"></circle>
+                <circle id="440300024063011" class="station_obj subway-entity subway-station-outside" cx="467"
+                        cy="1299" line_id="440300024063" station_id="440300024063011" r="14"></circle>
+                <use x="410" y="1292" xlink:href="#transferStation"></use>
+                <circle id="440300024056006" class="station_obj subway-entity subway-station-outside" cx="424"
+                        cy="1301" line_id="440300024063" station_id="440300024056006" r="14"></circle>
+                <circle cx="411" cy="1240" r="6" stroke="#00a946"></circle>
+                <circle id="440300024063009" class="station_obj subway-entity subway-station-outside" cx="411"
+                        cy="1240" line_id="440300024063" station_id="440300024063009" r="14"></circle>
+                <use x="397" y="1149" xlink:href="#transferStation"></use>
+                <circle id="440300024058025" class="station_obj subway-entity subway-station-outside" cx="411"
+                        cy="1158" line_id="440300024063" station_id="440300024058025" r="14"></circle>
+                <circle cx="411" cy="1115" r="6" stroke="#00a946"></circle>
+                <circle id="440300024063007" class="station_obj subway-entity subway-station-outside" cx="411"
+                        cy="1115" line_id="440300024063" station_id="440300024063007" r="14"></circle>
+                <circle cx="411" cy="1069" r="6" stroke="#00a946"></circle>
+                <circle id="440300024063006" class="station_obj subway-entity subway-station-outside" cx="411"
+                        cy="1069" line_id="440300024063" station_id="440300024063006" r="14"></circle>
+                <circle cx="411" cy="1026" r="6" stroke="#00a946"></circle>
+                <circle id="440300024063005" class="station_obj subway-entity subway-station-outside" cx="411"
+                        cy="1026" line_id="440300024063" station_id="440300024063005" r="14"></circle>
+                <circle cx="411" cy="982" r="6" stroke="#00a946"></circle>
+                <circle id="440300024063004" class="station_obj subway-entity subway-station-outside" cx="411"
+                        cy="982" line_id="440300024063" station_id="440300024063004" r="14"></circle>
+                <circle cx="411" cy="930" r="6" stroke="#00a946"></circle>
+                <circle id="440300024063003" class="station_obj subway-entity subway-station-outside" cx="411"
+                        cy="930" line_id="440300024063" station_id="440300024063003" r="14"></circle>
+                <circle cx="411" cy="872" r="6" stroke="#00a946"></circle>
+                <circle id="440300024063002" class="station_obj subway-entity subway-station-outside" cx="411"
+                        cy="872" line_id="440300024063" station_id="440300024063002" r="14"></circle>
+                <use x="294" y="1659" xlink:href="#transferStation"></use>
+                <circle id="440300024058035" class="station_obj subway-entity subway-station-outside" cx="308"
+                        cy="1668" line_id="440300024076" station_id="440300024058035" r="14"></circle>
+                <circle cx="375" cy="1668" r="6" stroke="#b75020"></circle>
+                <circle id="440300024076003" class="station_obj subway-entity subway-station-outside" cx="375"
+                        cy="1668" line_id="440300024076" station_id="440300024076003" r="14"></circle>
+                <circle cx="443" cy="1668" r="6" stroke="#b75020"></circle>
+                <circle id="440300024076004" class="station_obj subway-entity subway-station-outside" cx="443"
+                        cy="1668" line_id="440300024076" station_id="440300024076004" r="14"></circle>
+                <circle cx="511" cy="1668" r="6" stroke="#b75020"></circle>
+                <circle id="440300024076005" class="station_obj subway-entity subway-station-outside" cx="511"
+                        cy="1668" line_id="440300024076" station_id="440300024076005" r="14"></circle>
+                <circle cx="579" cy="1668" r="6" stroke="#b75020"></circle>
+                <circle id="440300024076006" class="station_obj subway-entity subway-station-outside" cx="579"
+                        cy="1668" line_id="440300024076" station_id="440300024076006" r="14"></circle>
+                <circle cx="646" cy="1610" r="6" stroke="#b75020"></circle>
+                <circle id="440300024076007" class="station_obj subway-entity subway-station-outside" cx="646"
+                        cy="1610" line_id="440300024076" station_id="440300024076007" r="14"></circle>
+                <circle cx="646" cy="1556" r="6" stroke="#b75020"></circle>
+                <circle id="440300024076008" class="station_obj subway-entity subway-station-outside" cx="646"
+                        cy="1556" line_id="440300024076" station_id="440300024076008" r="14"></circle>
+                <circle cx="646" cy="1499" r="6" stroke="#b75020"></circle>
+                <circle id="440300024076009" class="station_obj subway-entity subway-station-outside" cx="646"
+                        cy="1499" line_id="440300024076" station_id="440300024076009" r="14"></circle>
+                <use x="632" y="1424" xlink:href="#transferStation"></use>
+                <circle id="440300024056016" class="station_obj subway-entity subway-station-outside" cx="646"
+                        cy="1433" line_id="440300024076" station_id="440300024056016" r="14"></circle>
+                <circle cx="687" cy="1356" r="6" stroke="#b75020"></circle>
+                <circle id="440300024076011" class="station_obj subway-entity subway-station-outside" cx="687"
+                        cy="1356" line_id="440300024076" station_id="440300024076011" r="14"></circle>
+                <circle cx="747" cy="1355" r="6" stroke="#b75020"></circle>
+                <circle id="440300024076012" class="station_obj subway-entity subway-station-outside" cx="747"
+                        cy="1355" line_id="440300024076" station_id="440300024076012" r="14"></circle>
+                <circle cx="809" cy="1253" r="6" stroke="#b75020"></circle>
+                <circle id="440300024076014" class="station_obj subway-entity subway-station-outside" cx="809"
+                        cy="1253" line_id="440300024076" station_id="440300024076014" r="14"></circle>
+                <circle cx="856" cy="1206" r="6" stroke="#b75020"></circle>
+                <circle id="440300024076015" class="station_obj subway-entity subway-station-outside" cx="856"
+                        cy="1206" line_id="440300024076" station_id="440300024076015" r="14"></circle>
+                <use x="924" y="1197" xlink:href="#transferStation"></use>
+                <circle id="440300024050009" class="station_obj subway-entity subway-station-outside" cx="938"
+                        cy="1206" line_id="440300024076" station_id="440300024050009" r="14"></circle>
+                <circle cx="967" cy="1206" r="6" stroke="#b75020"></circle>
+                <circle id="440300024076017" class="station_obj subway-entity subway-station-outside" cx="967"
+                        cy="1206" line_id="440300024076" station_id="440300024076017" r="14"></circle>
+                <circle cx="993" cy="1206" r="6" stroke="#b75020"></circle>
+                <circle id="440300024076018" class="station_obj subway-entity subway-station-outside" cx="993"
+                        cy="1206" line_id="440300024076" station_id="440300024076018" r="14"></circle>
+                <circle cx="1021" cy="1207" r="6" stroke="#b75020"></circle>
+                <circle id="440300024076019" class="station_obj subway-entity subway-station-outside" cx="1021"
+                        cy="1207" line_id="440300024076" station_id="440300024076019" r="14"></circle>
+                <use x="1047" y="1198" xlink:href="#transferStation"></use>
+                <circle id="440300024054015" class="station_obj subway-entity subway-station-outside" cx="1061"
+                        cy="1207" line_id="440300024076" station_id="440300024054015" r="14"></circle>
+                <circle cx="1124" cy="1207" r="6" stroke="#b75020"></circle>
+                <circle id="440300024076021" class="station_obj subway-entity subway-station-outside" cx="1124"
+                        cy="1207" line_id="440300024076" station_id="440300024076021" r="14"></circle>
+                <use x="1176" y="1198" xlink:href="#transferStation"></use>
+                <circle id="440300024056002" class="station_obj subway-entity subway-station-outside" cx="1190"
+                        cy="1207" line_id="440300024076" station_id="440300024056002" r="14"></circle>
+                <use x="1215" y="1198" xlink:href="#transferStation"></use>
+                <circle id="440300024074013" class="station_obj subway-entity subway-station-outside" cx="1229"
+                        cy="1207" line_id="440300024076" station_id="440300024074013" r="14"></circle>
+                <circle cx="1349" cy="1207" r="6" stroke="#b75020"></circle>
+                <circle id="440300024076024" class="station_obj subway-entity subway-station-outside" cx="1349"
+                        cy="1207" line_id="440300024076" station_id="440300024076024" r="14"></circle>
+                <use x="1393" y="1198" xlink:href="#transferStation"></use>
+                <circle id="440300024050028" class="station_obj subway-entity subway-station-outside" cx="1407"
+                        cy="1207" line_id="440300024076" station_id="440300024050028" r="14"></circle>
+                <circle cx="1464" cy="1207" r="6" stroke="#b75020"></circle>
+                <circle id="440300024076026" class="station_obj subway-entity subway-station-outside" cx="1464"
+                        cy="1207" line_id="440300024076" station_id="440300024076026" r="14"></circle>
+                <circle cx="1722" cy="1207" r="6" stroke="#b75020"></circle>
+                <circle id="440300024076028" class="station_obj subway-entity subway-station-outside" cx="1722"
+                        cy="1207" line_id="440300024076" station_id="440300024076028" r="14"></circle>
+                <use x="1781" y="1198" xlink:href="#transferStation"></use>
+                <circle id="440300024058002" class="station_obj subway-entity subway-station-outside" cx="1795"
+                        cy="1207" line_id="440300024076" station_id="440300024058002" r="14"></circle>
+                <circle cx="1858" cy="1207" r="6" stroke="#b75020"></circle>
+                <circle id="440300024076030" class="station_obj subway-entity subway-station-outside" cx="1858"
+                        cy="1207" line_id="440300024076" station_id="440300024076030" r="14"></circle>
+                <circle cx="1923" cy="1207" r="6" stroke="#b75020"></circle>
+                <circle id="440300024076031" class="station_obj subway-entity subway-station-outside" cx="1923"
+                        cy="1207" line_id="440300024076" station_id="440300024076031" r="14"></circle>
+                <circle cx="1988" cy="1207" r="6" stroke="#b75020"></circle>
+                <circle id="440300024076032" class="station_obj subway-entity subway-station-outside" cx="1988"
+                        cy="1207" line_id="440300024076" station_id="440300024076032" r="14"></circle>
+                <circle cx="2053" cy="1207" r="6" stroke="#b75020"></circle>
+                <circle id="440300024076033" class="station_obj subway-entity subway-station-outside" cx="2053"
+                        cy="1207" line_id="440300024076" station_id="440300024076033" r="14"></circle>
+                <circle cx="1149" cy="1568" r="6" stroke="#00a4e0"></circle>
+                <circle id="440300024060032" class="station_obj subway-entity subway-station-outside" cx="1149"
+                        cy="1568" line_id="440300024060" station_id="440300024060032" r="14"></circle>
+                <circle cx="1149" cy="1473" r="6" stroke="#00a4e0"></circle>
+                <circle id="440300024060031" class="station_obj subway-entity subway-station-outside" cx="1149"
+                        cy="1473" line_id="440300024060" station_id="440300024060031" r="14"></circle>
+                <use x="1135" y="1389" xlink:href="#transferStation"></use>
+                <circle id="440300024050014" class="station_obj subway-entity subway-station-outside" cx="1149"
+                        cy="1398" line_id="440300024060" station_id="440300024050014" r="14"></circle>
+                <use x="1215" y="1120" xlink:href="#transferStation"></use>
+                <circle id="440300024060027" class="station_obj subway-entity subway-station-outside" cx="1229"
+                        cy="1129" line_id="440300024060" station_id="440300024060027" r="14"></circle>
+                <use x="1314" y="1120" xlink:href="#transferStation"></use>
+                <circle id="440300024060026" class="station_obj subway-entity subway-station-outside" cx="1328"
+                        cy="1129" line_id="440300024060" station_id="440300024060026" r="14"></circle>
+                <use x="1391" y="1120" xlink:href="#transferStation"></use>
+                <circle id="440300024050019" class="station_obj subway-entity subway-station-outside" cx="1405"
+                        cy="1129" line_id="440300024060" station_id="440300024050019" r="14"></circle>
+                <use x="1487" y="1120" xlink:href="#transferStation"></use>
+                <circle id="440300024046037" class="station_obj subway-entity subway-station-outside" cx="1501"
+                        cy="1129" line_id="440300024060" station_id="440300024046037" r="14"></circle>
+                <use x="1568" y="1120" xlink:href="#transferStation"></use>
+                <circle id="440300024054005" class="station_obj subway-entity subway-station-outside" cx="1582"
+                        cy="1129" line_id="440300024060" station_id="440300024054005" r="14"></circle>
+                <circle cx="1671" cy="1080" r="6" stroke="#00a4e0"></circle>
+                <circle id="440300024060021" class="station_obj subway-entity subway-station-outside" cx="1671"
+                        cy="1080" line_id="440300024060" station_id="440300024060021" r="14"></circle>
+                <circle cx="1671" cy="1030" r="6" stroke="#00a4e0"></circle>
+                <circle id="440300024060020" class="station_obj subway-entity subway-station-outside" cx="1671"
+                        cy="1030" line_id="440300024060" station_id="440300024060020" r="14"></circle>
+                <use x="1657" y="968" xlink:href="#transferStation"></use>
+                <circle id="440300024050023" class="station_obj subway-entity subway-station-outside" cx="1671"
+                        cy="977" line_id="440300024060" station_id="440300024050023" r="14"></circle>
+                <circle cx="1671" cy="931" r="6" stroke="#00a4e0"></circle>
+                <circle id="440300024060018" class="station_obj subway-entity subway-station-outside" cx="1671"
+                        cy="931" line_id="440300024060" station_id="440300024060018" r="14"></circle>
+                <circle cx="1671" cy="883" r="6" stroke="#00a4e0"></circle>
+                <circle id="440300024060017" class="station_obj subway-entity subway-station-outside" cx="1671"
+                        cy="883" line_id="440300024060" station_id="440300024060017" r="14"></circle>
+                <use x="1657" y="821" xlink:href="#transferStation"></use>
+                <circle id="440300024058007" class="station_obj subway-entity subway-station-outside" cx="1671"
+                        cy="830" line_id="440300024060" station_id="440300024058007" r="14"></circle>
+                <circle cx="1671" cy="782" r="6" stroke="#00a4e0"></circle>
+                <circle id="440300024060015" class="station_obj subway-entity subway-station-outside" cx="1671"
+                        cy="782" line_id="440300024060" station_id="440300024060015" r="14"></circle>
+                <circle cx="1671" cy="731" r="6" stroke="#00a4e0"></circle>
+                <circle id="440300024060014" class="station_obj subway-entity subway-station-outside" cx="1671"
+                        cy="731" line_id="440300024060" station_id="440300024060014" r="14"></circle>
+                <circle cx="1671" cy="681" r="6" stroke="#00a4e0"></circle>
+                <circle id="440300024060013" class="station_obj subway-entity subway-station-outside" cx="1671"
+                        cy="681" line_id="440300024060" station_id="440300024060013" r="14"></circle>
+                <circle cx="1706" cy="630" r="6" stroke="#00a4e0"></circle>
+                <circle id="440300024060012" class="station_obj subway-entity subway-station-outside" cx="1706"
+                        cy="630" line_id="440300024060" station_id="440300024060012" r="14"></circle>
+                <circle cx="1735" cy="601" r="6" stroke="#00a4e0"></circle>
+                <circle id="440300024060011" class="station_obj subway-entity subway-station-outside" cx="1735"
+                        cy="601" line_id="440300024060" station_id="440300024060011" r="14"></circle>
+                <circle cx="1764" cy="572" r="6" stroke="#00a4e0"></circle>
+                <circle id="440300024060010" class="station_obj subway-entity subway-station-outside" cx="1764"
+                        cy="572" line_id="440300024060" station_id="440300024060010" r="14"></circle>
+                <circle cx="1796" cy="544" r="6" stroke="#00a4e0"></circle>
+                <circle id="440300024060009" class="station_obj subway-entity subway-station-outside" cx="1796"
+                        cy="544" line_id="440300024060" station_id="440300024060009" r="14"></circle>
+                <circle cx="1828" cy="514" r="6" stroke="#00a4e0"></circle>
+                <circle id="440300024060008" class="station_obj subway-entity subway-station-outside" cx="1828"
+                        cy="514" line_id="440300024060" station_id="440300024060008" r="14"></circle>
+                <circle cx="1857" cy="486" r="6" stroke="#00a4e0"></circle>
+                <circle id="440300024060007" class="station_obj subway-entity subway-station-outside" cx="1857"
+                        cy="486" line_id="440300024060" station_id="440300024060007" r="14"></circle>
+                <circle cx="1906" cy="486" r="6" stroke="#00a4e0"></circle>
+                <circle id="440300024060006" class="station_obj subway-entity subway-station-outside" cx="1906"
+                        cy="486" line_id="440300024060" station_id="440300024060006" r="14"></circle>
+                <circle cx="1966" cy="486" r="6" stroke="#00a4e0"></circle>
+                <circle id="440300024060005" class="station_obj subway-entity subway-station-outside" cx="1966"
+                        cy="486" line_id="440300024060" station_id="440300024060005" r="14"></circle>
+                <circle cx="2026" cy="486" r="6" stroke="#00a4e0"></circle>
+                <circle id="440300024060004" class="station_obj subway-entity subway-station-outside" cx="2026"
+                        cy="486" line_id="440300024060" station_id="440300024060004" r="14"></circle>
+                <circle cx="2086" cy="486" r="6" stroke="#00a4e0"></circle>
+                <circle id="440300024060003" class="station_obj subway-entity subway-station-outside" cx="2086"
+                        cy="486" line_id="440300024060" station_id="440300024060003" r="14"></circle>
+                <circle cx="2146" cy="486" r="6" stroke="#00a4e0"></circle>
+                <circle id="440300024060002" class="station_obj subway-entity subway-station-outside" cx="2146"
+                        cy="486" line_id="440300024060" station_id="440300024060002" r="14"></circle>
+                <use x="1222" y="1482" xlink:href="#transferStation"></use>
+                <circle id="440300024074016" class="station_obj subway-entity subway-station-outside" cx="1236"
+                        cy="1491" line_id="440300024074" station_id="440300024074016" r="14"></circle>
+                <use x="1221" y="1389" xlink:href="#transferStation"></use>
+                <circle id="440300024050015" class="station_obj subway-entity subway-station-outside" cx="1235"
+                        cy="1398" line_id="440300024074" station_id="440300024050015" r="14"></circle>
+                <circle cx="1229" cy="1069" r="6" stroke="#d3101a"></circle>
+                <circle id="440300024074011" class="station_obj subway-entity subway-station-outside" cx="1229"
+                        cy="1069" line_id="440300024074" station_id="440300024074011" r="14"></circle>
+                <use x="1215" y="1002" xlink:href="#transferStation"></use>
+                <circle id="440300024054011" class="station_obj subway-entity subway-station-outside" cx="1229"
+                        cy="1011" line_id="440300024074" station_id="440300024054011" r="14"></circle>
+                <circle cx="1229" cy="966" r="6" stroke="#d3101a"></circle>
+                <circle id="440300024074009" class="station_obj subway-entity subway-station-outside" cx="1229"
+                        cy="966" line_id="440300024074" station_id="440300024074009" r="14"></circle>
+                <circle cx="1229" cy="894" r="6" stroke="#d3101a"></circle>
+                <circle id="440300024074008" class="station_obj subway-entity subway-station-outside" cx="1229"
+                        cy="894" line_id="440300024074" station_id="440300024074008" r="14"></circle>
+                <use x="1205" y="820" xlink:href="#transferStation"></use>
+                <circle id="440300024046002" class="station_obj subway-entity subway-station-outside" cx="1219"
+                        cy="829" line_id="440300024074" station_id="440300024046002" r="14"></circle>
+                <use x="1215" y="776" xlink:href="#transferStation"></use>
+                <circle id="440300024046003" class="station_obj subway-entity subway-station-outside" cx="1229"
+                        cy="785" line_id="440300024074" station_id="440300024046003" r="14"></circle>
+                <circle cx="1229" cy="670" r="6" stroke="#d3101a"></circle>
+                <circle id="440300024074005" class="station_obj subway-entity subway-station-outside" cx="1229"
+                        cy="670" line_id="440300024074" station_id="440300024074005" r="14"></circle>
+                <circle cx="1229" cy="635" r="6" stroke="#d3101a"></circle>
+                <circle id="440300024074004" class="station_obj subway-entity subway-station-outside" cx="1229"
+                        cy="635" line_id="440300024074" station_id="440300024074004" r="14"></circle>
+                <circle cx="1229" cy="600" r="6" stroke="#d3101a"></circle>
+                <circle id="440300024074003" class="station_obj subway-entity subway-station-outside" cx="1229"
+                        cy="600" line_id="440300024074" station_id="440300024074003" r="14"></circle>
+                <circle cx="1253" cy="550" r="6" stroke="#d3101a"></circle>
+                <circle id="440300024074002" class="station_obj subway-entity subway-station-outside" cx="1253"
+                        cy="550" line_id="440300024074" station_id="440300024074002" r="14"></circle>
+                <circle cx="1290" cy="516" r="6" stroke="#d3101a"></circle>
+                <circle id="440300024074081" class="station_obj subway-entity subway-station-outside" cx="1290"
+                        cy="516" line_id="440300024074" station_id="440300024074081" r="14"></circle>
+                <circle cx="1327" cy="482" r="6" stroke="#d3101a"></circle>
+                <circle id="440300024074082" class="station_obj subway-entity subway-station-outside" cx="1327"
+                        cy="482" line_id="440300024074" station_id="440300024074082" r="14"></circle>
+                <circle cx="1364" cy="448" r="6" stroke="#d3101a"></circle>
+                <circle id="440300024074083" class="station_obj subway-entity subway-station-outside" cx="1364"
+                        cy="448" line_id="440300024074" station_id="440300024074083" r="14"></circle>
+                <circle cx="1401" cy="414" r="6" stroke="#d3101a"></circle>
+                <circle id="440300024074084" class="station_obj subway-entity subway-station-outside" cx="1401"
+                        cy="414" line_id="440300024074" station_id="440300024074084" r="14"></circle>
+                <circle cx="1438" cy="380" r="6" stroke="#d3101a"></circle>
+                <circle id="440300024074085" class="station_obj subway-entity subway-station-outside" cx="1438"
+                        cy="380" line_id="440300024074" station_id="440300024074085" r="14"></circle>
+                <circle cx="1493" cy="355" r="6" stroke="#d3101a"></circle>
+                <circle id="440300024074086" class="station_obj subway-entity subway-station-outside" cx="1493"
+                        cy="355" line_id="440300024074" station_id="440300024074086" r="14"></circle>
+                <circle cx="1543" cy="355" r="6" stroke="#d3101a"></circle>
+                <circle id="440300024074087" class="station_obj subway-entity subway-station-outside" cx="1543"
+                        cy="355" line_id="440300024074" station_id="440300024074087" r="14"></circle>
+                <circle cx="1593" cy="355" r="6" stroke="#d3101a"></circle>
+                <circle id="440300024074088" class="station_obj subway-entity subway-station-outside" cx="1593"
+                        cy="355" line_id="440300024074" station_id="440300024074088" r="14"></circle>
+                <circle cx="308" cy="1616" r="6" stroke="#914696"></circle>
+                <circle id="440300024058034" class="station_obj subway-entity subway-station-outside" cx="308"
+                        cy="1616" line_id="440300024058" station_id="440300024058034" r="14"></circle>
+                <circle cx="308" cy="1568" r="6" stroke="#914696"></circle>
+                <circle id="440300024058033" class="station_obj subway-entity subway-station-outside" cx="308"
+                        cy="1568" line_id="440300024058" station_id="440300024058033" r="14"></circle>
+                <circle cx="308" cy="1524" r="6" stroke="#914696"></circle>
+                <circle id="440300024058032" class="station_obj subway-entity subway-station-outside" cx="308"
+                        cy="1524" line_id="440300024058" station_id="440300024058032" r="14"></circle>
+                <circle cx="308" cy="1472" r="6" stroke="#914696"></circle>
+                <circle id="440300024058031" class="station_obj subway-entity subway-station-outside" cx="308"
+                        cy="1472" line_id="440300024058" station_id="440300024058031" r="14"></circle>
+                <use x="294" y="1417" xlink:href="#transferStation"></use>
+                <circle id="440300024058030" class="station_obj subway-entity subway-station-outside" cx="308"
+                        cy="1426" line_id="440300024054" station_id="440300024058030" r="14"></circle>
+                <circle cx="355" cy="1370" r="6" stroke="#914696"></circle>
+                <circle id="440300024058029" class="station_obj subway-entity subway-station-outside" cx="355"
+                        cy="1370" line_id="440300024058" station_id="440300024058029" r="14"></circle>
+                <circle cx="346" cy="1217" r="6" stroke="#914696"></circle>
+                <circle id="440300024058027" class="station_obj subway-entity subway-station-outside" cx="346"
+                        cy="1217" line_id="440300024058" station_id="440300024058027" r="14"></circle>
+                <circle cx="349" cy="1178" r="6" stroke="#914696"></circle>
+                <circle id="440300024058026" class="station_obj subway-entity subway-station-outside" cx="349"
+                        cy="1178" line_id="440300024058" station_id="440300024058026" r="14"></circle>
+                <circle cx="580" cy="1080" r="6" stroke="#914696"></circle>
+                <circle id="440300024058024" class="station_obj subway-entity subway-station-outside" cx="580"
+                        cy="1080" line_id="440300024058" station_id="440300024058024" r="14"></circle>
+                <circle cx="644" cy="996" r="6" stroke="#914696"></circle>
+                <circle id="440300024058023" class="station_obj subway-entity subway-station-outside" cx="644"
+                        cy="996" line_id="440300024058" station_id="440300024058023" r="14"></circle>
+                <circle cx="705" cy="909" r="6" stroke="#914696"></circle>
+                <circle id="440300024058022" class="station_obj subway-entity subway-station-outside" cx="705"
+                        cy="909" line_id="440300024058" station_id="440300024058022" r="14"></circle>
+                <circle cx="815" cy="829" r="6" stroke="#914696"></circle>
+                <circle id="440300024058021" class="station_obj subway-entity subway-station-outside" cx="815"
+                        cy="829" line_id="440300024058" station_id="440300024058021" r="14"></circle>
+                <circle cx="879" cy="829" r="6" stroke="#914696"></circle>
+                <circle id="440300024058020" class="station_obj subway-entity subway-station-outside" cx="879"
+                        cy="829" line_id="440300024058" station_id="440300024058020" r="14"></circle>
+                <use x="924" y="820" xlink:href="#transferStation"></use>
+                <circle id="440300024050004" class="station_obj subway-entity subway-station-outside" cx="938"
+                        cy="829" line_id="440300024058" station_id="440300024050004" r="14"></circle>
+                <circle cx="1019" cy="829" r="6" stroke="#914696"></circle>
+                <circle id="440300024058018" class="station_obj subway-entity subway-station-outside" cx="1019"
+                        cy="829" line_id="440300024058" station_id="440300024058018" r="14"></circle>
+                <circle cx="1068" cy="829" r="6" stroke="#914696"></circle>
+                <circle id="440300024058017" class="station_obj subway-entity subway-station-outside" cx="1068"
+                        cy="829" line_id="440300024058" station_id="440300024058017" r="14"></circle>
+                <circle cx="1120" cy="829" r="6" stroke="#914696"></circle>
+                <circle id="440300024058016" class="station_obj subway-entity subway-station-outside" cx="1120"
+                        cy="829" line_id="440300024058" station_id="440300024058016" r="14"></circle>
+                <circle cx="1288" cy="830" r="6" stroke="#914696"></circle>
+                <circle id="440300024058014" class="station_obj subway-entity subway-station-outside" cx="1288"
+                        cy="830" line_id="440300024058" station_id="440300024058014" r="14"></circle>
+                <use x="1314" y="821" xlink:href="#transferStation"></use>
+                <circle id="440300024058013" class="station_obj subway-entity subway-station-outside" cx="1328"
+                        cy="830" line_id="440300024058" station_id="440300024058013" r="14"></circle>
+                <circle cx="1396" cy="830" r="6" stroke="#914696"></circle>
+                <circle id="440300024058012" class="station_obj subway-entity subway-station-outside" cx="1396"
+                        cy="830" line_id="440300024058" station_id="440300024058012" r="14"></circle>
+                <circle cx="1450" cy="830" r="6" stroke="#914696"></circle>
+                <circle id="440300024058011" class="station_obj subway-entity subway-station-outside" cx="1450"
+                        cy="830" line_id="440300024058" station_id="440300024058011" r="14"></circle>
+                <circle cx="1510" cy="830" r="6" stroke="#914696"></circle>
+                <circle id="440300024058010" class="station_obj subway-entity subway-station-outside" cx="1510"
+                        cy="830" line_id="440300024058" station_id="440300024058010" r="14"></circle>
+                <circle cx="1563" cy="830" r="6" stroke="#914696"></circle>
+                <circle id="440300024058009" class="station_obj subway-entity subway-station-outside" cx="1563"
+                        cy="830" line_id="440300024058" station_id="440300024058009" r="14"></circle>
+                <circle cx="1617" cy="830" r="6" stroke="#914696"></circle>
+                <circle id="440300024058008" class="station_obj subway-entity subway-station-outside" cx="1617"
+                        cy="830" line_id="440300024058" station_id="440300024058008" r="14"></circle>
+                <circle cx="1795" cy="965" r="6" stroke="#914696"></circle>
+                <circle id="440300024058006" class="station_obj subway-entity subway-station-outside" cx="1795"
+                        cy="965" line_id="440300024058" station_id="440300024058006" r="14"></circle>
+                <circle cx="1795" cy="1024" r="6" stroke="#914696"></circle>
+                <circle id="440300024058005" class="station_obj subway-entity subway-station-outside" cx="1795"
+                        cy="1024" line_id="440300024058" station_id="440300024058005" r="14"></circle>
+                <use x="1781" y="1081" xlink:href="#transferStation"></use>
+                <circle id="440300024050024" class="station_obj subway-entity subway-station-outside" cx="1795"
+                        cy="1090" line_id="440300024058" station_id="440300024050024" r="14"></circle>
+                <circle cx="1795" cy="1154" r="6" stroke="#914696"></circle>
+                <circle id="440300024058003" class="station_obj subway-entity subway-station-outside" cx="1795"
+                        cy="1154" line_id="440300024058" station_id="440300024058003" r="14"></circle>
+                <use x="389" y="486" xlink:href="#transferStation"></use>
+                <circle id="440300024046020" class="station_obj subway-entity subway-station-outside" cx="403"
+                        cy="495" line_id="440300024046" station_id="440300024046020" r="14"></circle>
+                <circle cx="478" cy="496" r="6" stroke="#1ab5ad"></circle>
+                <circle id="440300024046035" class="station_obj subway-entity subway-station-outside" cx="478"
+                        cy="496" line_id="440300024046" station_id="440300024046035" r="14"></circle>
+                <circle cx="530" cy="496" r="6" stroke="#1ab5ad"></circle>
+                <circle id="440300024046018" class="station_obj subway-entity subway-station-outside" cx="530"
+                        cy="496" line_id="440300024046" station_id="440300024046018" r="14"></circle>
+                <circle cx="586" cy="496" r="6" stroke="#1ab5ad"></circle>
+                <circle id="440300024046034" class="station_obj subway-entity subway-station-outside" cx="586"
+                        cy="496" line_id="440300024046" station_id="440300024046034" r="14"></circle>
+                <circle cx="640" cy="496" r="6" stroke="#1ab5ad"></circle>
+                <circle id="440300024046033" class="station_obj subway-entity subway-station-outside" cx="640"
+                        cy="496" line_id="440300024046" station_id="440300024046033" r="14"></circle>
+                <circle cx="692" cy="496" r="6" stroke="#1ab5ad"></circle>
+                <circle id="440300024046015" class="station_obj subway-entity subway-station-outside" cx="692"
+                        cy="496" line_id="440300024046" station_id="440300024046015" r="14"></circle>
+                <circle cx="743" cy="496" r="6" stroke="#1ab5ad"></circle>
+                <circle id="440300024046032" class="station_obj subway-entity subway-station-outside" cx="743"
+                        cy="496" line_id="440300024046" station_id="440300024046032" r="14"></circle>
+                <circle cx="799" cy="496" r="6" stroke="#1ab5ad"></circle>
+                <circle id="440300024046031" class="station_obj subway-entity subway-station-outside" cx="799"
+                        cy="496" line_id="440300024046" station_id="440300024046031" r="14"></circle>
+                <circle cx="849" cy="496" r="6" stroke="#1ab5ad"></circle>
+                <circle id="440300024046030" class="station_obj subway-entity subway-station-outside" cx="849"
+                        cy="496" line_id="440300024046" station_id="440300024046030" r="14"></circle>
+                <circle cx="921" cy="523" r="6" stroke="#1ab5ad"></circle>
+                <circle id="440300024046029" class="station_obj subway-entity subway-station-outside" cx="921"
+                        cy="523" line_id="440300024046" station_id="440300024046029" r="14"></circle>
+                <circle cx="955" cy="544" r="6" stroke="#1ab5ad"></circle>
+                <circle id="440300024046028" class="station_obj subway-entity subway-station-outside" cx="955"
+                        cy="544" line_id="440300024046" station_id="440300024046028" r="14"></circle>
+                <circle cx="991" cy="567" r="6" stroke="#1ab5ad"></circle>
+                <circle id="440300024046027" class="station_obj subway-entity subway-station-outside" cx="991"
+                        cy="567" line_id="440300024046" station_id="440300024046027" r="14"></circle>
+                <circle cx="1030" cy="591" r="6" stroke="#1ab5ad"></circle>
+                <circle id="440300024046026" class="station_obj subway-entity subway-station-outside" cx="1030"
+                        cy="591" line_id="440300024046" station_id="440300024046026" r="14"></circle>
+                <circle cx="1068" cy="613" r="6" stroke="#1ab5ad"></circle>
+                <circle id="440300024046025" class="station_obj subway-entity subway-station-outside" cx="1068"
+                        cy="613" line_id="440300024046" station_id="440300024046025" r="14"></circle>
+                <circle cx="1107" cy="637" r="6" stroke="#1ab5ad"></circle>
+                <circle id="440300024046024" class="station_obj subway-entity subway-station-outside" cx="1107"
+                        cy="637" line_id="440300024046" station_id="440300024046024" r="14"></circle>
+                <circle cx="1145" cy="660" r="6" stroke="#1ab5ad"></circle>
+                <circle id="440300024046023" class="station_obj subway-entity subway-station-outside" cx="1145"
+                        cy="660" line_id="440300024046" station_id="440300024046023" r="14"></circle>
+                <circle cx="1188" cy="687" r="6" stroke="#1ab5ad"></circle>
+                <circle id="440300024046022" class="station_obj subway-entity subway-station-outside" cx="1188"
+                        cy="687" line_id="440300024046" station_id="440300024046022" r="14"></circle>
+                <circle cx="1253" cy="739" r="6" stroke="#1ab5ad"></circle>
+                <circle id="440300024046021" class="station_obj subway-entity subway-station-outside" cx="1253"
+                        cy="739" line_id="440300024046" station_id="440300024046021" r="14"></circle>
+                <circle cx="1209" cy="915" r="6" stroke="#1ab5ad"></circle>
+                <circle id="440300024046041" class="station_obj subway-entity subway-station-outside" cx="1209"
+                        cy="915" line_id="440300024046" station_id="440300024046041" r="14"></circle>
+                <circle cx="1351" cy="945" r="6" stroke="#1ab5ad"></circle>
+                <circle id="440300024046040" class="station_obj subway-entity subway-station-outside" cx="1351"
+                        cy="945" line_id="440300024046" station_id="440300024046040" r="14"></circle>
+                <use x="1383" y="937" xlink:href="#transferStation"></use>
+                <circle id="440300024046039" class="station_obj subway-entity subway-station-outside" cx="1397"
+                        cy="946" line_id="440300024046" station_id="440300024046039" r="14"></circle>
+                <use x="1487" y="969" xlink:href="#transferStation"></use>
+                <circle id="440300024046038" class="station_obj subway-entity subway-station-outside" cx="1501"
+                        cy="978" line_id="440300024046" station_id="440300024046038" r="14"></circle>
+                <circle cx="1501" cy="1069" r="6" stroke="#1ab5ad"></circle>
+                <circle id="440300024046042" class="station_obj subway-entity subway-station-outside" cx="1501"
+                        cy="1069" line_id="440300024046" station_id="440300024046042" r="14"></circle>
+                <circle cx="1002" cy="747" r="6" stroke="#003a91"></circle>
+                <circle id="440300024050003" class="station_obj subway-entity subway-station-outside" cx="1002"
+                        cy="747" line_id="440300024050" station_id="440300024050003" r="14"></circle>
+                <circle cx="938" cy="871" r="6" stroke="#003a91"></circle>
+                <circle id="440300024050025" class="station_obj subway-entity subway-station-outside" cx="938"
+                        cy="871" line_id="440300024050" station_id="440300024050025" r="14"></circle>
+                <circle cx="938" cy="937" r="6" stroke="#003a91"></circle>
+                <circle id="440300024050005" class="station_obj subway-entity subway-station-outside" cx="938"
+                        cy="937" line_id="440300024050" station_id="440300024050005" r="14"></circle>
+                <circle cx="938" cy="993" r="6" stroke="#003a91"></circle>
+                <circle id="440300024050006" class="station_obj subway-entity subway-station-outside" cx="938"
+                        cy="993" line_id="440300024050" station_id="440300024050006" r="14"></circle>
+                <circle cx="938" cy="1059" r="6" stroke="#003a91"></circle>
+                <circle id="440300024050007" class="station_obj subway-entity subway-station-outside" cx="938"
+                        cy="1059" line_id="440300024050" station_id="440300024050007" r="14"></circle>
+                <circle cx="938" cy="1128" r="6" stroke="#003a91"></circle>
+                <circle id="440300024050008" class="station_obj subway-entity subway-station-outside" cx="938"
+                        cy="1128" line_id="440300024050" station_id="440300024050008" r="14"></circle>
+                <circle cx="1006" cy="1263" r="6" stroke="#003a91"></circle>
+                <circle id="440300024050010" class="station_obj subway-entity subway-station-outside" cx="1006"
+                        cy="1263" line_id="440300024050" station_id="440300024050010" r="14"></circle>
+                <circle cx="1050" cy="1345" r="6" stroke="#003a91"></circle>
+                <circle id="440300024050012" class="station_obj subway-entity subway-station-outside" cx="1050"
+                        cy="1345" line_id="440300024050" station_id="440300024050012" r="14"></circle>
+                <circle cx="1105" cy="1398" r="6" stroke="#003a91"></circle>
+                <circle id="440300024050013" class="station_obj subway-entity subway-station-outside" cx="1105"
+                        cy="1398" line_id="440300024050" station_id="440300024050013" r="14"></circle>
+                <circle cx="1193" cy="1398" r="6" stroke="#003a91"></circle>
+                <circle id="440300024050026" class="station_obj subway-entity subway-station-outside" cx="1193"
+                        cy="1398" line_id="440300024050" station_id="440300024050026" r="14"></circle>
+                <circle cx="1318" cy="1398" r="6" stroke="#003a91"></circle>
+                <circle id="440300024050016" class="station_obj subway-entity subway-station-outside" cx="1318"
+                        cy="1398" line_id="440300024050" station_id="440300024050016" r="14"></circle>
+                <circle cx="1407" cy="1365" r="6" stroke="#003a91"></circle>
+                <circle id="440300024050017" class="station_obj subway-entity subway-station-outside" cx="1407"
+                        cy="1365" line_id="440300024050" station_id="440300024050017" r="14"></circle>
+                <circle cx="1407" cy="1329" r="6" stroke="#003a91"></circle>
+                <circle id="440300024050018" class="station_obj subway-entity subway-station-outside" cx="1407"
+                        cy="1329" line_id="440300024050" station_id="440300024050018" r="14"></circle>
+                <circle cx="1450" cy="1040" r="6" stroke="#003a91"></circle>
+                <circle id="440300024050020" class="station_obj subway-entity subway-station-outside" cx="1450"
+                        cy="1040" line_id="440300024050" station_id="440300024050020" r="14"></circle>
+                <use x="1569" y="968" xlink:href="#transferStation"></use>
+                <circle id="440300024050022" class="station_obj subway-entity subway-station-outside" cx="1583"
+                        cy="977" line_id="440300024050" station_id="440300024050022" r="14"></circle>
+                <circle cx="1614" cy="977" r="6" stroke="#003a91"></circle>
+                <circle id="440300024050029" class="station_obj subway-entity subway-station-outside" cx="1614"
+                        cy="977" line_id="440300024050" station_id="440300024050029" r="14"></circle>
+                <circle cx="1640" cy="977" r="6" stroke="#003a91"></circle>
+                <circle id="440300024050030" class="station_obj subway-entity subway-station-outside" cx="1640"
+                        cy="977" line_id="440300024050" station_id="440300024050030" r="14"></circle>
+                <circle cx="2118" cy="1207" r="6" stroke="#b75020"></circle>
+                <circle id="440300024086028" class="station_obj subway-entity subway-station-outside" cx="2118"
+                        cy="1207" line_id="440300024086" station_id="440300024086028" r="14"></circle>
+                <circle cx="2183" cy="1207" r="6" stroke="#b75020"></circle>
+                <circle id="440300024088002" class="station_obj subway-entity subway-station-outside" cx="2183"
+                        cy="1207" line_id="440300024086" station_id="440300024088002" r="14"></circle>
+                <circle cx="2248" cy="1207" r="6" stroke="#b75020"></circle>
+                <circle id="440300024086030" class="station_obj subway-entity subway-station-outside" cx="2248"
+                        cy="1207" line_id="440300024086" station_id="440300024086030" r="14"></circle>
+                <circle cx="2313" cy="1207" r="6" stroke="#b75020"></circle>
+                <circle id="440300024086031" class="station_obj subway-entity subway-station-outside" cx="2313"
+                        cy="1207" line_id="440300024086" station_id="440300024086031" r="14"></circle>
+                <circle cx="2378" cy="1207" r="6" stroke="#b75020"></circle>
+                <circle id="440300024086032" class="station_obj subway-entity subway-station-outside" cx="2378"
+                        cy="1207" line_id="440300024086" station_id="440300024086032" r="14"></circle>
+                <circle cx="2443" cy="1207" r="6" stroke="#b75020"></circle>
+                <circle id="440300024086033" class="station_obj subway-entity subway-station-outside" cx="2443"
+                        cy="1207" line_id="440300024086" station_id="440300024086033" r="14"></circle>
+                <circle cx="353" cy="1426" r="6" stroke="#83656b"></circle>
+                <circle id="440300024054040" class="station_obj subway-entity subway-station-outside" cx="353"
+                        cy="1426" line_id="440300024054" station_id="440300024054040" r="14"></circle>
+                <circle cx="388" cy="1426" r="6" stroke="#83656b"></circle>
+                <circle id="440300024054039" class="station_obj subway-entity subway-station-outside" cx="388"
+                        cy="1426" line_id="440300024054" station_id="440300024054039" r="14"></circle>
+                <circle cx="423" cy="1426" r="6" stroke="#83656b"></circle>
+                <circle id="440300024054038" class="station_obj subway-entity subway-station-outside" cx="423"
+                        cy="1426" line_id="440300024054" station_id="440300024054038" r="14"></circle>
+                <circle cx="458" cy="1426" r="6" stroke="#83656b"></circle>
+                <circle id="440300024054037" class="station_obj subway-entity subway-station-outside" cx="458"
+                        cy="1426" line_id="440300024054" station_id="440300024054037" r="14"></circle>
+                <circle cx="489" cy="1426" r="6" stroke="#83656b"></circle>
+                <circle id="440300024054036" class="station_obj subway-entity subway-station-outside" cx="489"
+                        cy="1426" line_id="440300024054" station_id="440300024054036" r="14"></circle>
+                <circle cx="510" cy="1415" r="6" stroke="#83656b"></circle>
+                <circle id="440300024054035" class="station_obj subway-entity subway-station-outside" cx="510"
+                        cy="1415" line_id="440300024054" station_id="440300024054035" r="14"></circle>
+                <circle cx="563" cy="1371" r="6" stroke="#83656b"></circle>
+                <circle id="440300024054034" class="station_obj subway-entity subway-station-outside" cx="563"
+                        cy="1371" line_id="440300024054" station_id="440300024054034" r="14"></circle>
+                <circle cx="664" cy="1321" r="6" stroke="#83656b"></circle>
+                <circle id="440300024054033" class="station_obj subway-entity subway-station-outside" cx="664"
+                        cy="1321" line_id="440300024054" station_id="440300024054033" r="14"></circle>
+                <circle cx="715" cy="1341" r="6" stroke="#83656b"></circle>
+                <circle id="440300024054032" class="station_obj subway-entity subway-station-outside" cx="715"
+                        cy="1341" line_id="440300024054" station_id="440300024054032" r="14"></circle>
+                <use x="729" y="1424" xlink:href="#transferStation"></use>
+                <circle id="440300024054031" class="station_obj subway-entity subway-station-outside" cx="743"
+                        cy="1433" line_id="440300024054" station_id="440300024054031" r="14"></circle>
+                <circle cx="852" cy="1433" r="6" stroke="#83656b"></circle>
+                <circle id="440300024054030" class="station_obj subway-entity subway-station-outside" cx="852"
+                        cy="1433" line_id="440300024054" station_id="440300024054030" r="14"></circle>
+                <circle cx="911" cy="1433" r="6" stroke="#83656b"></circle>
+                <circle id="440300024054029" class="station_obj subway-entity subway-station-outside" cx="911"
+                        cy="1433" line_id="440300024054" station_id="440300024054029" r="14"></circle>
+                <circle cx="978" cy="1433" r="6" stroke="#83656b"></circle>
+                <circle id="440300024054028" class="station_obj subway-entity subway-station-outside" cx="978"
+                        cy="1433" line_id="440300024054" station_id="440300024054028" r="14"></circle>
+                <circle cx="1060" cy="1248" r="6" stroke="#83656b"></circle>
+                <circle id="440300024054016" class="station_obj subway-entity subway-station-outside" cx="1060"
+                        cy="1248" line_id="440300024054" station_id="440300024054016" r="14"></circle>
+                <circle cx="1061" cy="1085" r="6" stroke="#83656b"></circle>
+                <circle id="440300024054027" class="station_obj subway-entity subway-station-outside" cx="1061"
+                        cy="1085" line_id="440300024054" station_id="440300024054027" r="14"></circle>
+                <circle cx="1113" cy="1011" r="6" stroke="#83656b"></circle>
+                <circle id="440300024054026" class="station_obj subway-entity subway-station-outside" cx="1113"
+                        cy="1011" line_id="440300024054" station_id="440300024054026" r="14"></circle>
+                <circle cx="1169" cy="1011" r="6" stroke="#83656b"></circle>
+                <circle id="440300024054025" class="station_obj subway-entity subway-station-outside" cx="1169"
+                        cy="1011" line_id="440300024054" station_id="440300024054025" r="14"></circle>
+                <use x="1314" y="1002" xlink:href="#transferStation"></use>
+                <circle id="440300024054024" class="station_obj subway-entity subway-station-outside" cx="1328"
+                        cy="1011" line_id="440300024054" station_id="440300024054024" r="14"></circle>
+                <circle cx="1559" cy="885" r="6" stroke="#83656b"></circle>
+                <circle id="440300024054023" class="station_obj subway-entity subway-station-outside" cx="1559"
+                        cy="885" line_id="440300024054" station_id="440300024054023" r="14"></circle>
+                <circle cx="1583" cy="1052" r="6" stroke="#83656b"></circle>
+                <circle id="440300024054006" class="station_obj subway-entity subway-station-outside" cx="1583"
+                        cy="1052" line_id="440300024054" station_id="440300024054006" r="14"></circle>
+                <circle cx="1582" cy="1300" r="6" stroke="#83656b"></circle>
+                <circle id="440300024054004" class="station_obj subway-entity subway-station-outside" cx="1582"
+                        cy="1300" line_id="440300024054" station_id="440300024054004" r="14"></circle>
+                <circle cx="1616" cy="1371" r="6" stroke="#83656b"></circle>
+                <circle id="440300024054003" class="station_obj subway-entity subway-station-outside" cx="1616"
+                        cy="1371" line_id="440300024054" station_id="440300024054003" r="14"></circle>
+                <circle cx="1710" cy="1371" r="6" stroke="#83656b"></circle>
+                <circle id="440300024054021" class="station_obj subway-entity subway-station-outside" cx="1710"
+                        cy="1371" line_id="440300024054" station_id="440300024054021" r="14"></circle>
+                <circle cx="1763" cy="1371" r="6" stroke="#83656b"></circle>
+                <circle id="440300024054020" class="station_obj subway-entity subway-station-outside" cx="1763"
+                        cy="1371" line_id="440300024054" station_id="440300024054020" r="14"></circle>
+                <circle cx="1817" cy="1371" r="6" stroke="#83656b"></circle>
+                <circle id="440300024054019" class="station_obj subway-entity subway-station-outside" cx="1817"
+                        cy="1371" line_id="440300024054" station_id="440300024054019" r="14"></circle>
+                <circle cx="1578" cy="467" r="6" stroke="#eb6b91"></circle>
+                <circle id="900000055265023" class="station_obj subway-entity subway-station-outside" cx="1578"
+                        cy="467" line_id="900000055265" station_id="900000055265023" r="14"></circle>
+                <circle cx="1578" cy="506" r="6" stroke="#eb6b91"></circle>
+                <circle id="900000055265022" class="station_obj subway-entity subway-station-outside" cx="1578"
+                        cy="506" line_id="900000055265" station_id="900000055265022" r="14"></circle>
+                <circle cx="1578" cy="545" r="6" stroke="#eb6b91"></circle>
+                <circle id="900000055265021" class="station_obj subway-entity subway-station-outside" cx="1578"
+                        cy="545" line_id="900000055265" station_id="900000055265021" r="14"></circle>
+                <circle cx="1579" cy="584" r="6" stroke="#eb6b91"></circle>
+                <circle id="900000055265020" class="station_obj subway-entity subway-station-outside" cx="1579"
+                        cy="584" line_id="900000055265" station_id="900000055265020" r="14"></circle>
+                <circle cx="1579" cy="618" r="6" stroke="#eb6b91"></circle>
+                <circle id="900000055265019" class="station_obj subway-entity subway-station-outside" cx="1579"
+                        cy="618" line_id="900000055265" station_id="900000055265019" r="14"></circle>
+                <circle cx="1578" cy="642" r="6" stroke="#eb6b91"></circle>
+                <circle id="900000055265018" class="station_obj subway-entity subway-station-outside" cx="1578"
+                        cy="642" line_id="900000055265" station_id="900000055265018" r="14"></circle>
+                <circle cx="1549" cy="653" r="6" stroke="#eb6b91"></circle>
+                <circle id="900000055265017" class="station_obj subway-entity subway-station-outside" cx="1549"
+                        cy="653" line_id="900000055265" station_id="900000055265017" r="14"></circle>
+                <circle cx="1498" cy="653" r="6" stroke="#eb6b91"></circle>
+                <circle id="900000055265016" class="station_obj subway-entity subway-station-outside" cx="1498"
+                        cy="653" line_id="900000055265" station_id="900000055265016" r="14"></circle>
+                <circle cx="1445" cy="652" r="6" stroke="#eb6b91"></circle>
+                <circle id="900000055265015" class="station_obj subway-entity subway-station-outside" cx="1445"
+                        cy="652" line_id="900000055265" station_id="900000055265015" r="14"></circle>
+                <circle cx="1394" cy="652" r="6" stroke="#eb6b91"></circle>
+                <circle id="900000055265014" class="station_obj subway-entity subway-station-outside" cx="1394"
+                        cy="652" line_id="900000055265" station_id="900000055265014" r="14"></circle>
+                <circle cx="1328" cy="697" r="6" stroke="#eb6b91"></circle>
+                <circle id="900000055265013" class="station_obj subway-entity subway-station-outside" cx="1328"
+                        cy="697" line_id="900000055265" station_id="900000055265013" r="14"></circle>
+                <circle cx="1328" cy="746" r="6" stroke="#eb6b91"></circle>
+                <circle id="900000055265012" class="station_obj subway-entity subway-station-outside" cx="1328"
+                        cy="746" line_id="900000055265" station_id="900000055265012" r="14"></circle>
+                <circle cx="1328" cy="788" r="6" stroke="#eb6b91"></circle>
+                <circle id="900000055265011" class="station_obj subway-entity subway-station-outside" cx="1328"
+                        cy="788" line_id="900000055265" station_id="900000055265011" r="14"></circle>
+                <circle cx="1328" cy="858" r="6" stroke="#eb6b91"></circle>
+                <circle id="900000055265009" class="station_obj subway-entity subway-station-outside" cx="1328"
+                        cy="858" line_id="900000055265" station_id="900000055265009" r="14"></circle>
+                <circle cx="1328" cy="883" r="6" stroke="#eb6b91"></circle>
+                <circle id="900000055265024" class="station_obj subway-entity subway-station-outside" cx="1328"
+                        cy="883" line_id="900000055265" station_id="900000055265024" r="14"></circle>
+                <circle cx="1328" cy="915" r="6" stroke="#eb6b91"></circle>
+                <circle id="900000055265008" class="station_obj subway-entity subway-station-outside" cx="1328"
+                        cy="915" line_id="900000055265" station_id="900000055265008" r="14"></circle>
+                <circle cx="1328" cy="1073" r="6" stroke="#eb6b91"></circle>
+                <circle id="900000055265006" class="station_obj subway-entity subway-station-outside" cx="1328"
+                        cy="1073" line_id="900000055265" station_id="900000055265006" r="14"></circle>
+                <circle cx="403" cy="451" r="6" stroke="#741D51"></circle>
+                <circle id="440300024056025" class="station_obj subway-entity subway-station-outside" cx="403"
+                        cy="451" line_id="440300024056" station_id="440300024056025" r="14"></circle>
+                <circle cx="403" cy="533" r="6" stroke="#741D51"></circle>
+                <circle id="440300024056024" class="station_obj subway-entity subway-station-outside" cx="403"
+                        cy="533" line_id="440300024056" station_id="440300024056024" r="14"></circle>
+                <circle cx="403" cy="574" r="6" stroke="#741D51"></circle>
+                <circle id="440300024056023" class="station_obj subway-entity subway-station-outside" cx="403"
+                        cy="574" line_id="440300024056" station_id="440300024056023" r="14"></circle>
+                <circle cx="403" cy="618" r="6" stroke="#741D51"></circle>
+                <circle id="440300024056022" class="station_obj subway-entity subway-station-outside" cx="403"
+                        cy="618" line_id="440300024056" station_id="440300024056022" r="14"></circle>
+                <circle cx="403" cy="664" r="6" stroke="#741D51"></circle>
+                <circle id="440300024056021" class="station_obj subway-entity subway-station-outside" cx="403"
+                        cy="664" line_id="440300024056" station_id="440300024056021" r="14"></circle>
+                <circle cx="403" cy="709" r="6" stroke="#741D51"></circle>
+                <circle id="440300024056020" class="station_obj subway-entity subway-station-outside" cx="403"
+                        cy="709" line_id="440300024056" station_id="440300024056020" r="14"></circle>
+                <circle cx="353" cy="788" r="6" stroke="#741D51"></circle>
+                <circle id="440300024056009" class="station_obj subway-entity subway-station-outside" cx="353"
+                        cy="788" line_id="440300024056" station_id="440300024056009" r="14"></circle>
+                <circle cx="299" cy="886" r="6" stroke="#741D51"></circle>
+                <circle id="440300024056026" class="station_obj subway-entity subway-station-outside" cx="299"
+                        cy="886" line_id="440300024056" station_id="440300024056026" r="14"></circle>
+                <circle cx="299" cy="967" r="6" stroke="#741D51"></circle>
+                <circle id="440300024056019" class="station_obj subway-entity subway-station-outside" cx="299"
+                        cy="967" line_id="440300024056" station_id="440300024056019" r="14"></circle>
+                <circle cx="299" cy="1045" r="6" stroke="#741D51"></circle>
+                <circle id="440300024056018" class="station_obj subway-entity subway-station-outside" cx="299"
+                        cy="1045" line_id="440300024056" station_id="440300024056018" r="14"></circle>
+                <circle cx="299" cy="1119" r="6" stroke="#741D51"></circle>
+                <circle id="440300024056017" class="station_obj subway-entity subway-station-outside" cx="299"
+                        cy="1119" line_id="440300024056" station_id="440300024056017" r="14"></circle>
+                <circle cx="467" cy="1351" r="6" stroke="#741D51"></circle>
+                <circle id="440300024056005" class="station_obj subway-entity subway-station-outside" cx="467"
+                        cy="1351" line_id="440300024056" station_id="440300024056005" r="14"></circle>
+            </g>
+            <g id="g-station-name-normal">
+                <text id="name-440300024063031" class="station-name subway-entity" name="罗湖" text-anchor="left"
+                      x="1681" y="1424">罗湖
+                </text>
+                <text id="name-440300024063030" class="station-name subway-entity" name="国贸" text-anchor="left"
+                      x="1681" y="1304">国贸
+                </text>
+                <text id="name-440300024060022" class="station-name subway-entity" name="老街" text-anchor="left"
+                      x="1681" y="1119">老街
+                </text>
+                <text id="name-440300024063028" class="station-name subway-entity" name="大剧院" text-anchor="left"
+                      x="1616" y="1227">大剧院
+                </text>
+                <text id="name-440300024046036" class="station-name subway-entity" name="科学馆"
+                      text-anchor="middle" x="1501" y="1319">科学馆
+                </text>
+                <text id="name-440300024063026" class="station-name subway-entity" name="华强路"
+                      text-anchor="middle" x="1446" y="1288">华强路
+                </text>
+                <text id="name-440300024063025" class="station-name subway-entity" name="岗厦" text-anchor="left"
+                      x="1338" y="1319">岗厦
+                </text>
+                <text id="name-440300024063024" class="station-name subway-entity" name="会展中心"
+                      text-anchor="left" x="1239" y="1289">会展中心
+                </text>
+                <text id="name-440300024060029" class="station-name subway-entity" name="购物公园"
+                      text-anchor="left" x="1131" y="1289">购物公园
+                </text>
+                <text id="name-440300024063022" class="station-name subway-entity" name="香蜜湖"
+                      text-anchor="middle" x="1112" y="1319">香蜜湖
+                </text>
+                <text id="name-440300024050011" class="station-name subway-entity" name="车公庙" text-anchor="left"
+                      x="1010" y="1289">车公庙
+                </text>
+                <text id="name-440300024063020" class="station-name subway-entity" name="竹子林"
+                      text-anchor="middle" x="996" y="1319">竹子林
+                </text>
+                <text id="name-440300024063019" class="station-name subway-entity" name="侨城东"
+                      text-anchor="middle" x="943" y="1319">侨城东
+                </text>
+                <text id="name-440300024063018" class="station-name subway-entity" name="华侨城"
+                      text-anchor="middle" x="883" y="1319">华侨城
+                </text>
+                <text id="name-440300024063017" class="station-name subway-entity" name="世界之窗"
+                      text-anchor="left" x="820" y="1289">世界之窗
+                </text>
+                <text id="name-440300024063016" class="station-name subway-entity" name="白石洲"
+                      text-anchor="middle" x="747" y="1289">白石洲
+                </text>
+                <text id="name-440300024063015" class="station-name subway-entity" name="高新园"
+                      text-anchor="middle" x="688" y="1289">高新园
+                </text>
+                <text id="name-440300024063014" class="station-name subway-entity" name="深大"
+                      text-anchor="middle" x="632" y="1289">深大
+                </text>
+                <text id="name-440300024063013" class="station-name subway-entity" name="桃园"
+                      text-anchor="middle" x="579" y="1289">桃园
+                </text>
+                <text id="name-440300024063012" class="station-name subway-entity" name="大新"
+                      text-anchor="middle" x="524" y="1289">大新
+                </text>
+                <text id="name-440300024063011" class="station-name subway-entity" name="鲤鱼门"
+                      text-anchor="middle" x="467" y="1289">鲤鱼门
+                </text>
+                <text id="name-440300024056006" class="station-name subway-entity" name="前海湾" text-anchor="left"
+                      x="365" y="1306">前海湾
+                </text>
+                <text id="name-440300024063009" class="station-name subway-entity" name="新安" text-anchor="left"
+                      x="421" y="1245">新安
+                </text>
+                <text id="name-440300024058025" class="station-name subway-entity" name="宝安中心"
+                      text-anchor="left" x="421" y="1178">宝安中心
+                </text>
+                <text id="name-440300024063007" class="station-name subway-entity" name="宝体" text-anchor="left"
+                      x="421" y="1120">宝体
+                </text>
+                <text id="name-440300024063006" class="station-name subway-entity" name="坪洲" text-anchor="left"
+                      x="421" y="1074">坪洲
+                </text>
+                <text id="name-440300024063005" class="station-name subway-entity" name="西乡" text-anchor="left"
+                      x="421" y="1031">西乡
+                </text>
+                <text id="name-440300024063004" class="station-name subway-entity" name="固戍" text-anchor="left"
+                      x="421" y="987">固戍
+                </text>
+                <text id="name-440300024063003" class="station-name subway-entity" name="后瑞" text-anchor="left"
+                      x="421" y="935">后瑞
+                </text>
+                <text id="name-440300024063002" class="station-name subway-entity" name="机场东"
+                      text-anchor="middle" x="411" y="862">机场东
+                </text>
+                <text id="name-440300024058035" class="station-name subway-entity" name="赤湾"
+                      text-anchor="middle" x="308" y="1688">赤湾
+                </text>
+                <text id="name-440300024076003" class="station-name subway-entity" name="蛇口港"
+                      text-anchor="middle" x="375" y="1688">蛇口港
+                </text>
+                <text id="name-440300024076004" class="station-name subway-entity" name="海上世界"
+                      text-anchor="middle" x="443" y="1688">海上世界
+                </text>
+                <text id="name-440300024076005" class="station-name subway-entity" name="水湾"
+                      text-anchor="middle" x="511" y="1688">水湾
+                </text>
+                <text id="name-440300024076006" class="station-name subway-entity" name="东角头"
+                      text-anchor="middle" x="579" y="1688">东角头
+                </text>
+                <text id="name-440300024076007" class="station-name subway-entity" name="湾厦" text-anchor="left"
+                      x="656" y="1615">湾厦
+                </text>
+                <text id="name-440300024076008" class="station-name subway-entity" name="海月" text-anchor="left"
+                      x="656" y="1561">海月
+                </text>
+                <text id="name-440300024076009" class="station-name subway-entity" name="登良" text-anchor="left"
+                      x="656" y="1504">登良
+                </text>
+                <text id="name-440300024056016" class="station-name subway-entity" name="后海" text-anchor="left"
+                      x="656" y="1453">后海
+                </text>
+                <text id="name-440300024076011" class="station-name subway-entity" name="科苑"
+                      text-anchor="middle" x="687" y="1376">科苑
+                </text>
+                <text id="name-440300024076012" class="station-name subway-entity" name="红树湾" text-anchor="left"
+                      x="757" y="1375">红树湾
+                </text>
+                <text id="name-440300024076014" class="station-name subway-entity" name="侨城北" text-anchor="left"
+                      x="763" y="1258">侨城北
+                </text>
+                <text id="name-440300024076015" class="station-name subway-entity" name="深康"
+                      text-anchor="middle" x="856" y="1226">深康
+                </text>
+                <text id="name-440300024050009" class="station-name subway-entity" name="安托山" text-anchor="left"
+                      x="892" y="1226">安托山
+                </text>
+                <text id="name-440300024076017" class="station-name subway-entity" name="侨香"
+                      text-anchor="middle" x="967" y="1196">侨香
+                </text>
+                <text id="name-440300024076018" class="station-name subway-entity" name="香蜜"
+                      text-anchor="middle" x="993" y="1226">香蜜
+                </text>
+                <text id="name-440300024076019" class="station-name subway-entity" name="香梅北"
+                      text-anchor="middle" x="1021" y="1197">香梅北
+                </text>
+                <text id="name-440300024054015" class="station-name subway-entity" name="景田" text-anchor="left"
+                      x="1071" y="1197">景田
+                </text>
+                <text id="name-440300024076021" class="station-name subway-entity" name="莲花西"
+                      text-anchor="middle" x="1124" y="1227">莲花西
+                </text>
+                <text id="name-440300024056002" class="station-name subway-entity" name="福田" text-anchor="left"
+                      x="1156" y="1197">福田
+                </text>
+                <text id="name-440300024074013" class="station-name subway-entity" name="市民中心"
+                      text-anchor="left" x="1239" y="1197">市民中心
+                </text>
+                <text id="name-440300024076024" class="station-name subway-entity" name="岗厦北"
+                      text-anchor="middle" x="1349" y="1197">岗厦北
+                </text>
+                <text id="name-440300024050028" class="station-name subway-entity" name="华强北" text-anchor="left"
+                      x="1417" y="1227">华强北
+                </text>
+                <text id="name-440300024076026" class="station-name subway-entity" name="燕南"
+                      text-anchor="middle" x="1464" y="1197">燕南
+                </text>
+                <text id="name-440300024076028" class="station-name subway-entity" name="湖贝"
+                      text-anchor="middle" x="1722" y="1227">湖贝
+                </text>
+                <text id="name-440300024058002" class="station-name subway-entity" name="黄贝岭"
+                      text-anchor="middle" x="1795" y="1227">黄贝岭
+                </text>
+                <text id="name-440300024076030" class="station-name subway-entity" name="新秀"
+                      text-anchor="middle" x="1858" y="1197">新秀
+                </text>
+                <text id="name-440300024076031" class="station-name subway-entity" name="莲塘口岸"
+                      text-anchor="middle" x="1923" y="1227">莲塘口岸
+                </text>
+                <text id="name-440300024076032" class="station-name subway-entity" name="仙湖路"
+                      text-anchor="middle" x="1988" y="1197">仙湖路
+                </text>
+                <text id="name-440300024076033" class="station-name subway-entity" name="莲塘"
+                      text-anchor="middle" x="2053" y="1227">莲塘
+                </text>
+                <text id="name-440300024060032" class="station-name subway-entity" name="福保"
+                      text-anchor="middle" x="1149" y="1588">福保
+                </text>
+                <text id="name-440300024060031" class="station-name subway-entity" name="益田" text-anchor="left"
+                      x="1159" y="1478">益田
+                </text>
+                <text id="name-440300024050014" class="station-name subway-entity" name="石厦" text-anchor="left"
+                      x="1115" y="1388">石厦
+                </text>
+                <text id="name-440300024060027" class="station-name subway-entity" name="少年宫" text-anchor="left"
+                      x="1183" y="1119">少年宫
+                </text>
+                <text id="name-440300024060026" class="station-name subway-entity" name="莲花村" text-anchor="left"
+                      x="1338" y="1119">莲花村
+                </text>
+                <text id="name-440300024050019" class="station-name subway-entity" name="华新" text-anchor="left"
+                      x="1415" y="1119">华新
+                </text>
+                <text id="name-440300024046037" class="station-name subway-entity" name="通新岭" text-anchor="left"
+                      x="1455" y="1149">通新岭
+                </text>
+                <text id="name-440300024054005" class="station-name subway-entity" name="红岭" text-anchor="left"
+                      x="1592" y="1119">红岭
+                </text>
+                <text id="name-440300024060021" class="station-name subway-entity" name="晒布" text-anchor="left"
+                      x="1681" y="1085">晒布
+                </text>
+                <text id="name-440300024060020" class="station-name subway-entity" name="翠竹" text-anchor="left"
+                      x="1681" y="1035">翠竹
+                </text>
+                <text id="name-440300024050023" class="station-name subway-entity" name="田贝" text-anchor="left"
+                      x="1681" y="967">田贝
+                </text>
+                <text id="name-440300024060018" class="station-name subway-entity" name="水贝" text-anchor="left"
+                      x="1681" y="936">水贝
+                </text>
+                <text id="name-440300024060017" class="station-name subway-entity" name="草埔" text-anchor="left"
+                      x="1681" y="888">草埔
+                </text>
+                <text id="name-440300024058007" class="station-name subway-entity" name="布吉" text-anchor="left"
+                      x="1681" y="820">布吉
+                </text>
+                <text id="name-440300024060015" class="station-name subway-entity" name="木棉湾" text-anchor="left"
+                      x="1681" y="787">木棉湾
+                </text>
+                <text id="name-440300024060014" class="station-name subway-entity" name="大芬" text-anchor="left"
+                      x="1681" y="736">大芬
+                </text>
+                <text id="name-440300024060013" class="station-name subway-entity" name="丹竹头" text-anchor="left"
+                      x="1681" y="686">丹竹头
+                </text>
+                <text id="name-440300024060012" class="station-name subway-entity" name="六约" text-anchor="left"
+                      x="1716" y="635">六约
+                </text>
+                <text id="name-440300024060011" class="station-name subway-entity" name="塘坑" text-anchor="left"
+                      x="1745" y="606">塘坑
+                </text>
+                <text id="name-440300024060010" class="station-name subway-entity" name="横岗" text-anchor="left"
+                      x="1774" y="577">横岗
+                </text>
+                <text id="name-440300024060009" class="station-name subway-entity" name="永湖" text-anchor="left"
+                      x="1806" y="549">永湖
+                </text>
+                <text id="name-440300024060008" class="station-name subway-entity" name="荷坳" text-anchor="left"
+                      x="1838" y="519">荷坳
+                </text>
+                <text id="name-440300024060007" class="station-name subway-entity" name="大运"
+                      text-anchor="middle" x="1857" y="476">大运
+                </text>
+                <text id="name-440300024060006" class="station-name subway-entity" name="爱联"
+                      text-anchor="middle" x="1906" y="506">爱联
+                </text>
+                <text id="name-440300024060005" class="station-name subway-entity" name="吉祥"
+                      text-anchor="middle" x="1966" y="476">吉祥
+                </text>
+                <text id="name-440300024060004" class="station-name subway-entity" name="龙城广场"
+                      text-anchor="middle" x="2026" y="506">龙城广场
+                </text>
+                <text id="name-440300024060003" class="station-name subway-entity" name="南联"
+                      text-anchor="middle" x="2086" y="476">南联
+                </text>
+                <text id="name-440300024060002" class="station-name subway-entity" name="双龙"
+                      text-anchor="middle" x="2146" y="506">双龙
+                </text>
+                <text id="name-440300024074016" class="station-name subway-entity" name="福田口岸"
+                      text-anchor="middle" x="1236" y="1511">福田口岸
+                </text>
+                <text id="name-440300024050015" class="station-name subway-entity" name="福民" text-anchor="left"
+                      x="1252" y="1388">福民
+                </text>
+                <text id="name-440300024074011" class="station-name subway-entity" name="莲花北" text-anchor="left"
+                      x="1183" y="1074">莲花北
+                </text>
+                <text id="name-440300024054011" class="station-name subway-entity" name="上梅林" text-anchor="left"
+                      x="1239" y="1001">上梅林
+                </text>
+                <text id="name-440300024074009" class="station-name subway-entity" name="民乐" text-anchor="left"
+                      x="1239" y="971">民乐
+                </text>
+                <text id="name-440300024074008" class="station-name subway-entity" name="白石龙" text-anchor="left"
+                      x="1239" y="899">白石龙
+                </text>
+                <text id="name-440300024046002" class="station-name subway-entity" name="深圳北" text-anchor="left"
+                      x="1163" y="849" onclick="testa()">深圳北
+                </text>
+                <text id="name-440300024046003" class="station-name subway-entity" name="红山" text-anchor="left"
+                      x="1195" y="775">红山
+                </text>
+                <text id="name-440300024074005" class="station-name subway-entity" name="上塘" text-anchor="left"
+                      x="1239" y="675">上塘
+                </text>
+                <text id="name-440300024074004" class="station-name subway-entity" name="龙胜" text-anchor="left"
+                      x="1239" y="640">龙胜
+                </text>
+                <text id="name-440300024074003" class="station-name subway-entity" name="龙华" text-anchor="left"
+                      x="1239" y="605">龙华
+                </text>
+                <text id="name-440300024074002" class="station-name subway-entity" name="清湖" text-anchor="left"
+                      x="1263" y="555">清湖
+                </text>
+                <text id="name-440300024074081" class="station-name subway-entity" name="清湖北" text-anchor="left"
+                      x="1300" y="521">清湖北
+                </text>
+                <text id="name-440300024074082" class="station-name subway-entity" name="竹村" text-anchor="left"
+                      x="1337" y="487">竹村
+                </text>
+                <text id="name-440300024074083" class="station-name subway-entity" name="茜坑" text-anchor="left"
+                      x="1374" y="453">茜坑
+                </text>
+                <text id="name-440300024074084" class="station-name subway-entity" name="长湖" text-anchor="left"
+                      x="1411" y="419">长湖
+                </text>
+                <text id="name-440300024074085" class="station-name subway-entity" name="观澜" text-anchor="left"
+                      x="1448" y="385">观澜
+                </text>
+                <text id="name-440300024074086" class="station-name subway-entity" name="松元厦"
+                      text-anchor="middle" x="1493" y="345">松元厦
+                </text>
+                <text id="name-440300024074087" class="station-name subway-entity" name="观澜湖"
+                      text-anchor="middle" x="1543" y="375">观澜湖
+                </text>
+                <text id="name-440300024074088" class="station-name subway-entity" name="牛湖"
+                      text-anchor="middle" x="1593" y="345">牛湖
+                </text>
+                <text id="name-440300024058034" class="station-name subway-entity" name="荔湾" text-anchor="left"
+                      x="318" y="1621">荔湾
+                </text>
+                <text id="name-440300024058033" class="station-name subway-entity" name="铁路公园"
+                      text-anchor="left" x="318" y="1573">铁路公园
+                </text>
+                <text id="name-440300024058032" class="station-name subway-entity" name="妈湾" text-anchor="left"
+                      x="318" y="1529">妈湾
+                </text>
+                <text id="name-440300024058031" class="station-name subway-entity" name="前湾公园"
+                      text-anchor="left" x="318" y="1477">前湾公园
+                </text>
+                <text id="name-440300024058030" class="station-name subway-entity" name="前湾" text-anchor="left"
+                      x="264" y="1431">前湾
+                </text>
+                <text id="name-440300024058029" class="station-name subway-entity" name="桂湾" text-anchor="left"
+                      x="365" y="1375">桂湾
+                </text>
+                <text id="name-440300024058027" class="station-name subway-entity" name="临海" text-anchor="left"
+                      x="356" y="1222">临海
+                </text>
+                <text id="name-440300024058026" class="station-name subway-entity" name="宝华" text-anchor="left"
+                      x="359" y="1183">宝华
+                </text>
+                <text id="name-440300024058024" class="station-name subway-entity" name="翻身" text-anchor="left"
+                      x="590" y="1085">翻身
+                </text>
+                <text id="name-440300024058023" class="station-name subway-entity" name="灵芝" text-anchor="left"
+                      x="654" y="1001">灵芝
+                </text>
+                <text id="name-440300024058022" class="station-name subway-entity" name="洪浪北" text-anchor="left"
+                      x="715" y="914">洪浪北
+                </text>
+                <text id="name-440300024058021" class="station-name subway-entity" name="兴东"
+                      text-anchor="middle" x="815" y="819">兴东
+                </text>
+                <text id="name-440300024058020" class="station-name subway-entity" name="留仙洞"
+                      text-anchor="middle" x="879" y="819">留仙洞
+                </text>
+                <text id="name-440300024050004" class="station-name subway-entity" name="西丽" text-anchor="left"
+                      x="948" y="819">西丽
+                </text>
+                <text id="name-440300024058018" class="station-name subway-entity" name="大学城"
+                      text-anchor="middle" x="1019" y="849">大学城
+                </text>
+                <text id="name-440300024058017" class="station-name subway-entity" name="塘朗"
+                      text-anchor="middle" x="1068" y="819">塘朗
+                </text>
+                <text id="name-440300024058016" class="station-name subway-entity" name="长岭陂"
+                      text-anchor="middle" x="1120" y="819">长岭陂
+                </text>
+                <text id="name-440300024058014" class="station-name subway-entity" name="民治"
+                      text-anchor="middle" x="1288" y="820">民治
+                </text>
+                <text id="name-440300024058013" class="station-name subway-entity" name="五和" text-anchor="left"
+                      x="1338" y="820">五和
+                </text>
+                <text id="name-440300024058012" class="station-name subway-entity" name="坂田"
+                      text-anchor="middle" x="1396" y="820">坂田
+                </text>
+                <text id="name-440300024058011" class="station-name subway-entity" name="杨美"
+                      text-anchor="middle" x="1450" y="820">杨美
+                </text>
+                <text id="name-440300024058010" class="station-name subway-entity" name="上水径"
+                      text-anchor="middle" x="1510" y="850">上水径
+                </text>
+                <text id="name-440300024058009" class="station-name subway-entity" name="下水径"
+                      text-anchor="middle" x="1563" y="820">下水径
+                </text>
+                <text id="name-440300024058008" class="station-name subway-entity" name="长龙"
+                      text-anchor="middle" x="1617" y="850">长龙
+                </text>
+                <text id="name-440300024058006" class="station-name subway-entity" name="百鸽笼" text-anchor="left"
+                      x="1805" y="970">百鸽笼
+                </text>
+                <text id="name-440300024058005" class="station-name subway-entity" name="布心" text-anchor="left"
+                      x="1805" y="1029">布心
+                </text>
+                <text id="name-440300024050024" class="station-name subway-entity" name="太安" text-anchor="left"
+                      x="1805" y="1080">太安
+                </text>
+                <text id="name-440300024058003" class="station-name subway-entity" name="怡景" text-anchor="left"
+                      x="1805" y="1159">怡景
+                </text>
+                <text id="name-440300024046020" class="station-name subway-entity" name="松岗" text-anchor="left"
+                      x="360" y="500">松岗
+                </text>
+                <text id="name-440300024046035" class="station-name subway-entity" name="溪头"
+                      text-anchor="middle" x="478" y="486">溪头
+                </text>
+                <text id="name-440300024046018" class="station-name subway-entity" name="松岗公园"
+                      text-anchor="middle" x="530" y="516">松岗公园
+                </text>
+                <text id="name-440300024046034" class="station-name subway-entity" name="薯田埔"
+                      text-anchor="middle" x="586" y="486">薯田埔
+                </text>
+                <text id="name-440300024046033" class="station-name subway-entity" name="合水口"
+                      text-anchor="middle" x="640" y="516">合水口
+                </text>
+                <text id="name-440300024046015" class="station-name subway-entity" name="公明广场"
+                      text-anchor="middle" x="692" y="486">公明广场
+                </text>
+                <text id="name-440300024046032" class="station-name subway-entity" name="红花山"
+                      text-anchor="middle" x="743" y="516">红花山
+                </text>
+                <text id="name-440300024046031" class="station-name subway-entity" name="楼村"
+                      text-anchor="middle" x="799" y="486">楼村
+                </text>
+                <text id="name-440300024046030" class="station-name subway-entity" name="科学公园"
+                      text-anchor="middle" x="849" y="516">科学公园
+                </text>
+                <text id="name-440300024046029" class="station-name subway-entity" name="光明" text-anchor="left"
+                      x="931" y="513">光明
+                </text>
+                <text id="name-440300024046028" class="station-name subway-entity" name="光明大街"
+                      text-anchor="left" x="965" y="534">光明大街
+                </text>
+                <text id="name-440300024046027" class="station-name subway-entity" name="凤凰城" text-anchor="left"
+                      x="1001" y="557">凤凰城
+                </text>
+                <text id="name-440300024046026" class="station-name subway-entity" name="长圳" text-anchor="left"
+                      x="1040" y="581">长圳
+                </text>
+                <text id="name-440300024046025" class="station-name subway-entity" name="上屋" text-anchor="left"
+                      x="1078" y="603">上屋
+                </text>
+                <text id="name-440300024046024" class="station-name subway-entity" name="官田" text-anchor="left"
+                      x="1117" y="627">官田
+                </text>
+                <text id="name-440300024046023" class="station-name subway-entity" name="阳台山东"
+                      text-anchor="left" x="1087" y="665">阳台山东
+                </text>
+                <text id="name-440300024046022" class="station-name subway-entity" name="元芬" text-anchor="left"
+                      x="1154" y="692">元芬
+                </text>
+                <text id="name-440300024046021" class="station-name subway-entity" name="上芬" text-anchor="left"
+                      x="1263" y="744">上芬
+                </text>
+                <text id="name-440300024046041" class="station-name subway-entity" name="梅林关" text-anchor="left"
+                      x="1163" y="920">梅林关
+                </text>
+                <text id="name-440300024046040" class="station-name subway-entity" name="翰岭"
+                      text-anchor="middle" x="1351" y="965">翰岭
+                </text>
+                <text id="name-440300024046039" class="station-name subway-entity" name="银湖" text-anchor="left"
+                      x="1407" y="966">银湖
+                </text>
+                <text id="name-440300024046038" class="station-name subway-entity" name="八卦岭" text-anchor="left"
+                      x="1511" y="998">八卦岭
+                </text>
+                <text id="name-440300024046042" class="station-name subway-entity" name="体育中心"
+                      text-anchor="left" x="1511" y="1074">体育中心
+                </text>
+                <text id="name-440300024050003" class="station-name subway-entity" name="西丽湖"
+                      text-anchor="middle" x="1002" y="737">西丽湖
+                </text>
+                <text id="name-440300024050025" class="station-name subway-entity" name="茶光" text-anchor="left"
+                      x="948" y="876">茶光
+                </text>
+                <text id="name-440300024050005" class="station-name subway-entity" name="珠光" text-anchor="left"
+                      x="948" y="942">珠光
+                </text>
+                <text id="name-440300024050006" class="station-name subway-entity" name="龙井" text-anchor="left"
+                      x="948" y="998">龙井
+                </text>
+                <text id="name-440300024050007" class="station-name subway-entity" name="桃源村" text-anchor="left"
+                      x="948" y="1064">桃源村
+                </text>
+                <text id="name-440300024050008" class="station-name subway-entity" name="深云" text-anchor="left"
+                      x="948" y="1133">深云
+                </text>
+                <text id="name-440300024050010" class="station-name subway-entity" name="农林"
+                      text-anchor="middle" x="1006" y="1253">农林
+                </text>
+                <text id="name-440300024050012" class="station-name subway-entity" name="上沙" text-anchor="left"
+                      x="1016" y="1350">上沙
+                </text>
+                <text id="name-440300024050013" class="station-name subway-entity" name="沙尾"
+                      text-anchor="middle" x="1105" y="1418">沙尾
+                </text>
+                <text id="name-440300024050026" class="station-name subway-entity" name="皇岗村"
+                      text-anchor="middle" x="1193" y="1418">皇岗村
+                </text>
+                <text id="name-440300024050016" class="station-name subway-entity" name="皇岗口岸"
+                      text-anchor="middle" x="1318" y="1418">皇岗口岸
+                </text>
+                <text id="name-440300024050017" class="station-name subway-entity" name="赤尾" text-anchor="left"
+                      x="1417" y="1370">赤尾
+                </text>
+                <text id="name-440300024050018" class="station-name subway-entity" name="华强南" text-anchor="left"
+                      x="1417" y="1334">华强南
+                </text>
+                <text id="name-440300024050020" class="station-name subway-entity" name="黄木岗" text-anchor="left"
+                      x="1404" y="1045">黄木岗
+                </text>
+                <text id="name-440300024050022" class="station-name subway-entity" name="红岭北" text-anchor="left"
+                      x="1537" y="967">红岭北
+                </text>
+                <text id="name-440300024050029" class="station-name subway-entity" name="笋岗"
+                      text-anchor="middle" x="1614" y="967">笋岗
+                </text>
+                <text id="name-440300024050030" class="station-name subway-entity" name="洪湖"
+                      text-anchor="middle" x="1640" y="997">洪湖
+                </text>
+                <text id="name-440300024086028" class="station-name subway-entity" name="梧桐山南"
+                      text-anchor="middle" x="2118" y="1197">梧桐山南
+                </text>
+                <text id="name-440300024088002" class="station-name subway-entity" name="沙头角"
+                      text-anchor="middle" x="2183" y="1227">沙头角
+                </text>
+                <text id="name-440300024086030" class="station-name subway-entity" name="海山"
+                      text-anchor="middle" x="2248" y="1197">海山
+                </text>
+                <text id="name-440300024086031" class="station-name subway-entity" name="盐田港西"
+                      text-anchor="middle" x="2313" y="1227">盐田港西
+                </text>
+                <text id="name-440300024086032" class="station-name subway-entity" name="深外高中"
+                      text-anchor="middle" x="2378" y="1197">深外高中
+                </text>
+                <text id="name-440300024086033" class="station-name subway-entity" name="盐田路"
+                      text-anchor="middle" x="2443" y="1227">盐田路
+                </text>
+                <text id="name-440300024054040" class="station-name subway-entity" name="梦海"
+                      text-anchor="middle" x="353" y="1446">梦海
+                </text>
+                <text id="name-440300024054039" class="station-name subway-entity" name="怡海"
+                      text-anchor="middle" x="388" y="1416">怡海
+                </text>
+                <text id="name-440300024054038" class="station-name subway-entity" name="荔林"
+                      text-anchor="middle" x="423" y="1446">荔林
+                </text>
+                <text id="name-440300024054037" class="station-name subway-entity" name="南油西"
+                      text-anchor="middle" x="458" y="1416">南油西
+                </text>
+                <text id="name-440300024054036" class="station-name subway-entity" name="南油"
+                      text-anchor="middle" x="489" y="1446">南油
+                </text>
+                <text id="name-440300024054035" class="station-name subway-entity" name="南山书城"
+                      text-anchor="left" x="510" y="1432">南山书城
+                </text>
+                <text id="name-440300024054034" class="station-name subway-entity" name="深大南" text-anchor="left"
+                      x="573" y="1391">深大南
+                </text>
+                <text id="name-440300024054033" class="station-name subway-entity" name="粤海门"
+                      text-anchor="middle" x="664" y="1341">粤海门
+                </text>
+                <text id="name-440300024054032" class="station-name subway-entity" name="高新南" text-anchor="left"
+                      x="725" y="1331">高新南
+                </text>
+                <text id="name-440300024054031" class="station-name subway-entity" name="红树湾南"
+                      text-anchor="left" x="753" y="1453">红树湾南
+                </text>
+                <text id="name-440300024054030" class="station-name subway-entity" name="深湾"
+                      text-anchor="middle" x="852" y="1423">深湾
+                </text>
+                <text id="name-440300024054029" class="station-name subway-entity" name="深圳湾公园"
+                      text-anchor="middle" x="911" y="1453">深圳湾公园
+                </text>
+                <text id="name-440300024054028" class="station-name subway-entity" name="下沙"
+                      text-anchor="middle" x="978" y="1423">下沙
+                </text>
+                <text id="name-440300024054016" class="station-name subway-entity" name="香梅" text-anchor="left"
+                      x="1070" y="1253">香梅
+                </text>
+                <text id="name-440300024054027" class="station-name subway-entity" name="梅景" text-anchor="left"
+                      x="1071" y="1090">梅景
+                </text>
+                <text id="name-440300024054026" class="station-name subway-entity" name="下梅林"
+                      text-anchor="middle" x="1113" y="1001">下梅林
+                </text>
+                <text id="name-440300024054025" class="station-name subway-entity" name="梅村"
+                      text-anchor="middle" x="1169" y="1001">梅村
+                </text>
+                <text id="name-440300024054024" class="station-name subway-entity" name="孖岭" text-anchor="left"
+                      x="1338" y="1031">孖岭
+                </text>
+                <text id="name-440300024054023" class="station-name subway-entity" name="泥岗"
+                      text-anchor="middle" x="1559" y="875">泥岗
+                </text>
+                <text id="name-440300024054006" class="station-name subway-entity" name="园岭" text-anchor="left"
+                      x="1593" y="1057">园岭
+                </text>
+                <text id="name-440300024054004" class="station-name subway-entity" name="红岭南" text-anchor="left"
+                      x="1592" y="1305">红岭南
+                </text>
+                <text id="name-440300024054003" class="station-name subway-entity" name="鹿丹村"
+                      text-anchor="middle" x="1616" y="1391">鹿丹村
+                </text>
+                <text id="name-440300024054021" class="station-name subway-entity" name="人民南"
+                      text-anchor="middle" x="1710" y="1361">人民南
+                </text>
+                <text id="name-440300024054020" class="station-name subway-entity" name="向西村"
+                      text-anchor="middle" x="1763" y="1391">向西村
+                </text>
+                <text id="name-440300024054019" class="station-name subway-entity" name="文锦"
+                      text-anchor="middle" x="1817" y="1361">文锦
+                </text>
+                <text id="name-900000055265023" class="station-name subway-entity" name="双拥街" text-anchor="left"
+                      x="1588" y="472">双拥街
+                </text>
+                <text id="name-900000055265022" class="station-name subway-entity" name="平湖" text-anchor="left"
+                      x="1588" y="511">平湖
+                </text>
+                <text id="name-900000055265021" class="station-name subway-entity" name="禾花" text-anchor="left"
+                      x="1588" y="550">禾花
+                </text>
+                <text id="name-900000055265020" class="station-name subway-entity" name="华南城" text-anchor="left"
+                      x="1589" y="589">华南城
+                </text>
+                <text id="name-900000055265019" class="station-name subway-entity" name="木古" text-anchor="left"
+                      x="1589" y="623">木古
+                </text>
+                <text id="name-900000055265018" class="station-name subway-entity" name="上李朗" text-anchor="left"
+                      x="1588" y="647">上李朗
+                </text>
+                <text id="name-900000055265017" class="station-name subway-entity" name="凉帽山"
+                      text-anchor="middle" x="1549" y="673">凉帽山
+                </text>
+                <text id="name-900000055265016" class="station-name subway-entity" name="甘坑"
+                      text-anchor="middle" x="1498" y="643">甘坑
+                </text>
+                <text id="name-900000055265015" class="station-name subway-entity" name="雪象"
+                      text-anchor="middle" x="1445" y="672">雪象
+                </text>
+                <text id="name-900000055265014" class="station-name subway-entity" name="岗头"
+                      text-anchor="middle" x="1394" y="642">岗头
+                </text>
+                <text id="name-900000055265013" class="station-name subway-entity" name="华为" text-anchor="left"
+                      x="1338" y="702">华为
+                </text>
+                <text id="name-900000055265012" class="station-name subway-entity" name="贝尔路" text-anchor="left"
+                      x="1338" y="751">贝尔路
+                </text>
+                <text id="name-900000055265011" class="station-name subway-entity" name="坂田北" text-anchor="left"
+                      x="1338" y="793">坂田北
+                </text>
+                <text id="name-900000055265009" class="station-name subway-entity" name="光雅园" text-anchor="left"
+                      x="1338" y="863">光雅园
+                </text>
+                <text id="name-900000055265024" class="station-name subway-entity" name="南坑" text-anchor="left"
+                      x="1338" y="888">南坑
+                </text>
+                <text id="name-900000055265008" class="station-name subway-entity" name="雅宝" text-anchor="left"
+                      x="1338" y="920">雅宝
+                </text>
+                <text id="name-900000055265006" class="station-name subway-entity" name="冬瓜岭" text-anchor="left"
+                      x="1338" y="1078">冬瓜岭
+                </text>
+                <text id="name-440300024056025" class="station-name subway-entity" name="碧头" text-anchor="left"
+                      x="413" y="456">碧头
+                </text>
+                <text id="name-440300024056024" class="station-name subway-entity" name="后亭" text-anchor="left"
+                      x="413" y="538">后亭
+                </text>
+                <text id="name-440300024056023" class="station-name subway-entity" name="沙井" text-anchor="left"
+                      x="413" y="579">沙井
+                </text>
+                <text id="name-440300024056022" class="station-name subway-entity" name="马安山" text-anchor="left"
+                      x="413" y="623">马安山
+                </text>
+                <text id="name-440300024056021" class="station-name subway-entity" name="塘尾" text-anchor="left"
+                      x="413" y="669">塘尾
+                </text>
+                <text id="name-440300024056020" class="station-name subway-entity" name="桥头" text-anchor="left"
+                      x="413" y="714">桥头
+                </text>
+                <text id="name-440300024056009" class="station-name subway-entity" name="福永" text-anchor="left"
+                      x="363" y="793">福永
+                </text>
+                <text id="name-440300024056026" class="station-name subway-entity" name="机场北" text-anchor="left"
+                      x="309" y="891">机场北
+                </text>
+                <text id="name-440300024056019" class="station-name subway-entity" name="机场" text-anchor="left"
+                      x="309" y="972">机场
+                </text>
+                <text id="name-440300024056018" class="station-name subway-entity" name="碧海湾" text-anchor="left"
+                      x="309" y="1050">碧海湾
+                </text>
+                <text id="name-440300024056017" class="station-name subway-entity" name="宝安" text-anchor="left"
+                      x="309" y="1124">宝安
+                </text>
+                <text id="name-440300024056005" class="station-name subway-entity" name="南山" text-anchor="left"
+                      x="477" y="1356">南山
+                </text>
+            </g>
+            <g id="g-line-name">
+                <g transform="translate(1116,1149)" class="line_name subway-entity" lineid="440300024056">
+                    <rect rx="3" ry="3" width="65" height="30" fill="#741D51"></rect>
+                    <text class="line_name_txt" lineid="440300024056" height="20" x="18" y="20" dy="4"
+                          fill="#fff" text-anchor="middle">11
+                    </text>
+                    <text class="line_name_bg" lineid="440300024056" height="22" x="48" y="11" dy="4"
+                          fill="#fff" text-anchor="middle">号线
+                    </text>
+                    <text class="line_name_bg2" lineid="440300024056" height="18" x="48" y="22" dy="4"
+                          fill="#fff" text-anchor="middle">Line 11
+                    </text>
+                </g>
+                <g transform="translate(1240,1521)" class="line_name subway-entity" lineid="900000055265">
+                    <rect rx="3" ry="3" width="65" height="30" fill="#eb6b91"></rect>
+                    <text class="line_name_txt" lineid="900000055265" height="20" x="18" y="20" dy="4"
+                          fill="#fff" text-anchor="middle">10
+                    </text>
+                    <text class="line_name_bg" lineid="900000055265" height="22" x="48" y="11" dy="4"
+                          fill="#fff" text-anchor="middle">号线
+                    </text>
+                    <text class="line_name_bg2" lineid="900000055265" height="18" x="48" y="22" dy="4"
+                          fill="#fff" text-anchor="middle">Line 10
+                    </text>
+                </g>
+                <g transform="translate(1840,1352)" class="line_name subway-entity" lineid="440300024054">
+                    <rect rx="3" ry="3" width="65" height="30" fill="#83656b"></rect>
+                    <text class="line_name_txt" lineid="440300024054" height="20" x="18" y="20" dy="4"
+                          fill="#fff" text-anchor="middle">9
+                    </text>
+                    <text class="line_name_bg" lineid="440300024054" height="22" x="48" y="11" dy="4"
+                          fill="#fff" text-anchor="middle">号线
+                    </text>
+                    <text class="line_name_bg2" lineid="440300024054" height="18" x="48" y="22" dy="4"
+                          fill="#fff" text-anchor="middle">Line 9
+                    </text>
+                </g>
+                <g transform="translate(2465,1190)" class="line_name subway-entity" lineid="440300024086">
+                    <rect rx="3" ry="3" width="65" height="30" fill="#b75020"></rect>
+                    <text class="line_name_txt" lineid="440300024086" height="20" x="18" y="20" dy="4"
+                          fill="#fff" text-anchor="middle">8
+                    </text>
+                    <text class="line_name_bg" lineid="440300024086" height="22" x="48" y="11" dy="4"
+                          fill="#fff" text-anchor="middle">号线
+                    </text>
+                    <text class="line_name_bg2" lineid="440300024086" height="18" x="48" y="22" dy="4"
+                          fill="#fff" text-anchor="middle">Line 8
+                    </text>
+                </g>
+                <g transform="translate(1838,1074)" class="line_name subway-entity" lineid="440300024050">
+                    <rect rx="3" ry="3" width="65" height="30" fill="#003a91"></rect>
+                    <text class="line_name_txt" lineid="440300024050" height="20" x="18" y="20" dy="4"
+                          fill="#fff" text-anchor="middle">7
+                    </text>
+                    <text class="line_name_bg" lineid="440300024050" height="22" x="48" y="11" dy="4"
+                          fill="#fff" text-anchor="middle">号线
+                    </text>
+                    <text class="line_name_bg2" lineid="440300024050" height="18" x="48" y="22" dy="4"
+                          fill="#fff" text-anchor="middle">Line 7
+                    </text>
+                </g>
+                <g transform="translate(1483,1329)" class="line_name subway-entity" lineid="440300024046">
+                    <rect rx="3" ry="3" width="65" height="30" fill="#1ab5ad"></rect>
+                    <text class="line_name_txt" lineid="440300024046" height="20" x="18" y="20" dy="4"
+                          fill="#fff" text-anchor="middle">6
+                    </text>
+                    <text class="line_name_bg" lineid="440300024046" height="22" x="48" y="11" dy="4"
+                          fill="#fff" text-anchor="middle">号线
+                    </text>
+                    <text class="line_name_bg2" lineid="440300024046" height="18" x="48" y="22" dy="4"
+                          fill="#fff" text-anchor="middle">Line 6
+                    </text>
+                </g>
+                <g transform="translate(1760,1237)" class="line_name subway-entity" lineid="440300024058">
+                    <rect rx="3" ry="3" width="65" height="30" fill="#914696"></rect>
+                    <text class="line_name_txt" lineid="440300024058" height="20" x="18" y="20" dy="4"
+                          fill="#fff" text-anchor="middle">5
+                    </text>
+                    <text class="line_name_bg" lineid="440300024058" height="22" x="48" y="11" dy="4"
+                          fill="#fff" text-anchor="middle">号线
+                    </text>
+                    <text class="line_name_bg2" lineid="440300024058" height="18" x="48" y="22" dy="4"
+                          fill="#fff" text-anchor="middle">Line 5
+                    </text>
+                </g>
+                <g transform="translate(1170,1521)" class="line_name subway-entity" lineid="440300024074">
+                    <rect rx="3" ry="3" width="65" height="30" fill="#d3101a"></rect>
+                    <text class="line_name_txt" lineid="440300024074" height="20" x="18" y="20" dy="4"
+                          fill="#fff" text-anchor="middle">4
+                    </text>
+                    <text class="line_name_bg" lineid="440300024074" height="22" x="48" y="11" dy="4"
+                          fill="#fff" text-anchor="middle">号线
+                    </text>
+                    <text class="line_name_bg2" lineid="440300024074" height="18" x="48" y="22" dy="4"
+                          fill="#fff" text-anchor="middle">Line 4
+                    </text>
+                </g>
+                <g transform="translate(2168,470)" class="line_name subway-entity" lineid="440300024060">
+                    <rect rx="3" ry="3" width="65" height="30" fill="#00a4e0"></rect>
+                    <text class="line_name_txt" lineid="440300024060" height="20" x="18" y="20" dy="4"
+                          fill="#fff" text-anchor="middle">3
+                    </text>
+                    <text class="line_name_bg" lineid="440300024060" height="22" x="48" y="11" dy="4"
+                          fill="#fff" text-anchor="middle">号线
+                    </text>
+                    <text class="line_name_bg2" lineid="440300024060" height="18" x="48" y="22" dy="4"
+                          fill="#fff" text-anchor="middle">Line 3
+                    </text>
+                </g>
+                <g transform="translate(2020,1237)" class="line_name subway-entity" lineid="440300024076">
+                    <rect rx="3" ry="3" width="65" height="30" fill="#b75020"></rect>
+                    <text class="line_name_txt" lineid="440300024076" height="20" x="18" y="20" dy="4"
+                          fill="#fff" text-anchor="middle">2
+                    </text>
+                    <text class="line_name_bg" lineid="440300024076" height="22" x="48" y="11" dy="4"
+                          fill="#fff" text-anchor="middle">号线
+                    </text>
+                    <text class="line_name_bg2" lineid="440300024076" height="18" x="48" y="22" dy="4"
+                          fill="#fff" text-anchor="middle">Line 2
+                    </text>
+                </g>
+                <g transform="translate(1641,1434)" class="line_name subway-entity" lineid="440300024063">
+                    <rect rx="3" ry="3" width="65" height="30" fill="#00a946"></rect>
+                    <text class="line_name_txt" lineid="440300024063" height="20" x="18" y="20" dy="4"
+                          fill="#fff" text-anchor="middle">1
+                    </text>
+                    <text class="line_name_bg" lineid="440300024063" height="22" x="48" y="11" dy="4"
+                          fill="#fff" text-anchor="middle">号线
+                    </text>
+                    <text class="line_name_bg2" lineid="440300024063" height="18" x="48" y="22" dy="4"
+                          fill="#fff" text-anchor="middle">Line 1
+                    </text>
+                </g>
+                <g transform="translate(381,812)" class="line_name subway-entity" lineid="440300024063">
+                    <rect rx="3" ry="3" width="65" height="30" fill="#00a946"></rect>
+                    <text class="line_name_txt" lineid="440300024063" height="20" x="18" y="20" dy="4"
+                          fill="#fff" text-anchor="middle">1
+                    </text>
+                    <text class="line_name_bg" lineid="440300024063" height="22" x="48" y="11" dy="4"
+                          fill="#fff" text-anchor="middle">号线
+                    </text>
+                    <text class="line_name_bg2" lineid="440300024063" height="18" x="48" y="22" dy="4"
+                          fill="#fff" text-anchor="middle">Line 1
+                    </text>
+                </g>
+                <g transform="translate(310,1698)" class="line_name subway-entity" lineid="440300024076">
+                    <rect rx="3" ry="3" width="65" height="30" fill="#b75020"></rect>
+                    <text class="line_name_txt" lineid="440300024076" height="20" x="18" y="20" dy="4"
+                          fill="#fff" text-anchor="middle">2
+                    </text>
+                    <text class="line_name_bg" lineid="440300024076" height="22" x="48" y="11" dy="4"
+                          fill="#fff" text-anchor="middle">号线
+                    </text>
+                    <text class="line_name_bg2" lineid="440300024076" height="18" x="48" y="22" dy="4"
+                          fill="#fff" text-anchor="middle">Line 2
+                    </text>
+                </g>
+                <g transform="translate(1115,1597)" class="line_name subway-entity" lineid="440300024060">
+                    <rect rx="3" ry="3" width="65" height="30" fill="#00a4e0"></rect>
+                    <text class="line_name_txt" lineid="440300024060" height="20" x="18" y="20" dy="4"
+                          fill="#fff" text-anchor="middle">3
+                    </text>
+                    <text class="line_name_bg" lineid="440300024060" height="22" x="48" y="11" dy="4"
+                          fill="#fff" text-anchor="middle">号线
+                    </text>
+                    <text class="line_name_bg2" lineid="440300024060" height="18" x="48" y="22" dy="4"
+                          fill="#fff" text-anchor="middle">Line 3
+                    </text>
+                </g>
+                <g transform="translate(1614,338)" class="line_name subway-entity" lineid="440300024074">
+                    <rect rx="3" ry="3" width="65" height="30" fill="#d3101a"></rect>
+                    <text class="line_name_txt" lineid="440300024074" height="20" x="18" y="20" dy="4"
+                          fill="#fff" text-anchor="middle">4
+                    </text>
+                    <text class="line_name_bg" lineid="440300024074" height="22" x="48" y="11" dy="4"
+                          fill="#fff" text-anchor="middle">号线
+                    </text>
+                    <text class="line_name_bg2" lineid="440300024074" height="18" x="48" y="22" dy="4"
+                          fill="#fff" text-anchor="middle">Line 4
+                    </text>
+                </g>
+                <g transform="translate(240,1698)" class="line_name subway-entity" lineid="440300024058">
+                    <rect rx="3" ry="3" width="65" height="30" fill="#914696"></rect>
+                    <text class="line_name_txt" lineid="440300024058" height="20" x="18" y="20" dy="4"
+                          fill="#fff" text-anchor="middle">5
+                    </text>
+                    <text class="line_name_bg" lineid="440300024058" height="22" x="48" y="11" dy="4"
+                          fill="#fff" text-anchor="middle">号线
+                    </text>
+                    <text class="line_name_bg2" lineid="440300024058" height="18" x="48" y="22" dy="4"
+                          fill="#fff" text-anchor="middle">Line 5
+                    </text>
+                </g>
+                <g transform="translate(290,480)" class="line_name subway-entity" lineid="440300024046">
+                    <rect rx="3" ry="3" width="65" height="30" fill="#1ab5ad"></rect>
+                    <text class="line_name_txt" lineid="440300024046" height="20" x="18" y="20" dy="4"
+                          fill="#fff" text-anchor="middle">6
+                    </text>
+                    <text class="line_name_bg" lineid="440300024046" height="22" x="48" y="11" dy="4"
+                          fill="#fff" text-anchor="middle">号线
+                    </text>
+                    <text class="line_name_bg2" lineid="440300024046" height="18" x="48" y="22" dy="4"
+                          fill="#fff" text-anchor="middle">Line 6
+                    </text>
+                </g>
+                <g transform="translate(972,690)" class="line_name subway-entity" lineid="440300024050">
+                    <rect rx="3" ry="3" width="65" height="30" fill="#003a91"></rect>
+                    <text class="line_name_txt" lineid="440300024050" height="20" x="18" y="20" dy="4"
+                          fill="#fff" text-anchor="middle">7
+                    </text>
+                    <text class="line_name_bg" lineid="440300024050" height="22" x="48" y="11" dy="4"
+                          fill="#fff" text-anchor="middle">号线
+                    </text>
+                    <text class="line_name_bg2" lineid="440300024050" height="18" x="48" y="22" dy="4"
+                          fill="#fff" text-anchor="middle">Line 7
+                    </text>
+                </g>
+                <g transform="translate(2085,1147)" class="line_name subway-entity" lineid="440300024086">
+                    <rect rx="3" ry="3" width="65" height="30" fill="#b75020"></rect>
+                    <text class="line_name_txt" lineid="440300024086" height="20" x="18" y="20" dy="4"
+                          fill="#fff" text-anchor="middle">8
+                    </text>
+                    <text class="line_name_bg" lineid="440300024086" height="22" x="48" y="11" dy="4"
+                          fill="#fff" text-anchor="middle">号线
+                    </text>
+                    <text class="line_name_bg2" lineid="440300024086" height="18" x="48" y="22" dy="4"
+                          fill="#fff" text-anchor="middle">Line 8
+                    </text>
+                </g>
+                <g transform="translate(194,1411)" class="line_name subway-entity" lineid="440300024054">
+                    <rect rx="3" ry="3" width="65" height="30" fill="#83656b"></rect>
+                    <text class="line_name_txt" lineid="440300024054" height="20" x="18" y="20" dy="4"
+                          fill="#fff" text-anchor="middle">9
+                    </text>
+                    <text class="line_name_bg" lineid="440300024054" height="22" x="48" y="11" dy="4"
+                          fill="#fff" text-anchor="middle">号线
+                    </text>
+                    <text class="line_name_bg2" lineid="440300024054" height="18" x="48" y="22" dy="4"
+                          fill="#fff" text-anchor="middle">Line 9
+                    </text>
+                </g>
+                <g transform="translate(1545,420)" class="line_name subway-entity" lineid="900000055265">
+                    <rect rx="3" ry="3" width="65" height="30" fill="#eb6b91"></rect>
+                    <text class="line_name_txt" lineid="900000055265" height="20" x="18" y="20" dy="4"
+                          fill="#fff" text-anchor="middle">10
+                    </text>
+                    <text class="line_name_bg" lineid="900000055265" height="22" x="48" y="11" dy="4"
+                          fill="#fff" text-anchor="middle">号线
+                    </text>
+                    <text class="line_name_bg2" lineid="900000055265" height="18" x="48" y="22" dy="4"
+                          fill="#fff" text-anchor="middle">Line 10
+                    </text>
+                </g>
+                <g transform="translate(375,405)" class="line_name subway-entity" lineid="440300024056">
+                    <rect rx="3" ry="3" width="65" height="30" fill="#741D51"></rect>
+                    <text class="line_name_txt" lineid="440300024056" height="20" x="18" y="20" dy="4"
+                          fill="#fff" text-anchor="middle">11
+                    </text>
+                    <text class="line_name_bg" lineid="440300024056" height="22" x="48" y="11" dy="4"
+                          fill="#fff" text-anchor="middle">号线
+                    </text>
+                    <text class="line_name_bg2" lineid="440300024056" height="18" x="48" y="22" dy="4"
+                          fill="#fff" text-anchor="middle">Line 11
+                    </text>
+                </g>
+            </g>
+        </g>
+    </svg>
+</div>
+
+<div style="width: 1200px; height: 600px; left: 100px; top: 230px; position: absolute;">
+    <span id="clock" style="font-size: 50pt; margin-left: -50px; ">
+        <p>&nbsp;</p>
+    </span>
+
+    <p style="font-size: 50pt; margin-left: -50px; margin-bottom: 25px">地铁乘客数量：</p>
+    <span id="peo" style="font-size: 35pt; margin-left: -40px; color: #ff6b25">
+        73413人
+    </span>
+
+    <p style="font-size: 50pt; margin-left: -50px; margin-bottom: 25px">当前进站人数：</p>
+    <span id="peo_in" style="font-size: 35pt; margin-left: -40px; color: #7d74ff">
+        2164人
+    </span>
+
+    <p style="font-size: 50pt; margin-left: -50px; margin-bottom: 25px">当前出站人数：</p>
+    <span id="peo_out" style="font-size: 35pt; margin-left: -40px; color: #7dffcd">
+        1736人
+    </span>
+</div>
+
+<div id="totalBackground" style="display: none"></div>
+
+<div id="stationD" style="background: white; width: 800px; height: 550px; border: solid black; position: absolute; top: 500px; left: 1000px; z-index: 2; display: none" onclick="testb()">
+       <p style="font-size: 50pt; text-align: center; margin-top: 20px; ">深圳北</p>
+
+    <p style="font-size: 40pt; margin-left: 10px; margin-top: -60px;">十分钟站内乘客数量：</p>
+    <p id="s_peo" style="font-size: 35pt; margin-left: 15px; margin-top: -50px;">
+        512人
+    </p>
+
+    <p style="font-size: 40pt; margin-left: 10px; margin-top: -20px">十分钟内进站人数：</p>
+    <p id="s_peo_in" style="font-size: 35pt; margin-left: 15px; margin-top: -50px;">
+        230人
+    </p>
+
+    <p style="font-size: 40pt; margin-left: 10px; margin-top: -20px">十分钟内出站人数：</p>
+    <p id="s_peo_out" style="font-size: 35pt; margin-left: 15px; margin-top: -50px;">
+        282人
+    </p>
+</div>
+
+<script>
+    var int = self.setInterval("clock()", 50);
+
+    function clock() {
+        var t = new Date("2021-05-15 08:25:34");
+        document.getElementById("clock").innerText = '当前时间：' + t.getFullYear() + '年' + t.getMonth()
+            + '月' + t.getDate() + '日 ' + t.getHours() + ':' + t.getMinutes() + ':' + t.getSeconds();
+    }
+
+    function testa() {
+        document.getElementById('stationD').style.display = 'block';
+        document.getElementById('totalBackground').style.display = 'block';
+    }
+
+    function testb() {
+        document.getElementById('stationD').style.display = 'none';
+        document.getElementById('totalBackground').style.display = 'none';
+    }
+</script>
+
+</body>
+</html>

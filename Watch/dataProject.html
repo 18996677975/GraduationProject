@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>数据平台</title>
+
+    <link rel="stylesheet" href="out-html/docs.css">
+    <link rel="stylesheet" type="text/css" href="out-html/codemirror.css"/>
+    <script type="text/javascript" src="out-html/codemirror.js"></script>
+    <script type="text/javascript" src="out-html/sql.js"></script>
+    <script type="text/javascript" src="out-html/matchbrackets.js"></script>
+
+
+    <style type="text/css">
+        #top {
+
+            display: block;
+            width: 2500px;
+            height: 100px;
+            margin-left: 300px;
+            margin-top: 100px;
+        }
+
+        #top input {
+            border: solid blue;
+            background: none;
+            color: black;
+            font-size: 50px;
+            width: 1200px;
+            height: 100px;
+            padding: 0px 20px 0px 20px;
+        }
+
+    </style>
+
+    <script type="text/javascript">
+        myTextarea = document.getElementById("editor");
+        var editor = CodeMirror.fromTextArea(myTextarea, {
+            mode: "text/x-mysql",
+            lineNumbers: true,    //显示行数
+            matchBrackets: true  // 括号匹配（这个需要导入codemirror的 matchbrackets.js文件）
+        });
+    </script>
+
+</head>
+<body style="background: #ebebeb">
+<div id="top">
+    <input type="button" id="inp1" value="首页" name="首页" style="background: white"/>
+    <input type="button" id="inp2" value="数据平台" name="数据平台" style="background: white"/>
+</div>
+
+<div style="width:3000px; height:100px; ">
+    <button style="height: 80px; width: 500px; margin-left: 250px; margin-top: 10px; font-size: 50px; color: white; background: #eb6818">
+        运行代码
+    </button>
+</div>
+
+
+<form style="width:2500px; height:1000px; font-size: 40px; margin-left: 250px;">
+    <textarea id="code" name="code" style="display: none;">Please enter your SQL code:
+
+</textarea>
+</form>
+
+<script>
+    var editor = CodeMirror.fromTextArea(document.getElementById("code"), {
+        mode: "text/x-mysql",
+        lineNumbers: true,
+        matchBrackets: true
+    });
+</script>
+
+</body>
+</html>
